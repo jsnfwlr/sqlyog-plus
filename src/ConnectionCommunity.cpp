@@ -1328,7 +1328,7 @@ ConnectionCommunity::OnWmCommand(HWND hwndactive, MDIWindow *wnd, WPARAM wparam)
 	case ACCEL_FORMATALLQUERIES:
 	case ID_FORMATCURRENTQUERY:
 	case ACCEL_FORMATCURRENTQUERY:
-	case ACCEL_FORMATSELECTEDQUERY:	
+	// case ACCEL_FORMATSELECTEDQUERY:	
 		{
 			m_powertoolsID = LOWORD(wparam);
 			GetSQLyogEntDialog();
@@ -1409,7 +1409,7 @@ void
 ConnectionCommunity::OnClose()
 {	
 	m_isapclose = wyTrue;
-	ShowDialog(pGlobals->m_pcmainwin->m_hwndmain);
+	// ShowDialog(pGlobals->m_pcmainwin->m_hwndmain);
 	return;
 }
 
