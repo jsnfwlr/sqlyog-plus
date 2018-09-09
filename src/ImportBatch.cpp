@@ -16,7 +16,6 @@
 
 */
 
-#define _WIN32_WINNT   0x500
 #include "FrameWindowHelper.h"
 #include "ImportBatch.h"
 #include "ImportFromSQL.h"
@@ -43,7 +42,7 @@ ImportBatch::~ImportBatch()
 wyBool
 ImportBatch::Create(HWND hwnd, Tunnel * tunnel, PMYSQL mysql)
 {
-	wyInt32 ret;
+	wyInt64 ret;
 	m_umysql = mysql;
 	m_tunnel = tunnel;
 	m_hwndparent = hwnd;
@@ -51,7 +50,7 @@ ImportBatch::Create(HWND hwnd, Tunnel * tunnel, PMYSQL mysql)
 	//Post 8.01
     //RepaintTabModule();
 	
-	ret = (wyInt32)DialogBoxParam(pGlobals->m_hinstance, MAKEINTRESOURCE(IDD_IMPORTBATCH),
+	ret = (wyInt64)DialogBoxParam(pGlobals->m_hinstance, MAKEINTRESOURCE(IDD_IMPORTBATCH),
 							hwnd, ImportBatch::DlgProc, (LPARAM)this);
 
     if(ret == wyTrue )
@@ -96,7 +95,7 @@ ImportBatch::DlgProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_HELP:
-		ShowHelp("http://sqlyogkb.webyog.com/article/235-excute-sql-script");
+		ShowHelp("http://sqlyogkb.webyog.com/article/117-excute-sql-script");
 		return wyTrue;
 
 	case WM_COMMAND:
@@ -418,6 +417,9 @@ ImportBatch::ImportConclude(IMPORTBATCH * evt, IMPORTPARAM * param)
 	EnableDlgWindows(wyTrue);
 	ChangeOKButtonText(_(L"&Execute"));
 
+	if(GetForegroundWindow() != m_hwnd)
+		FlashWindow(pGlobals->m_pcmainwin->m_hwndmain, TRUE);
+
 	if(SUCCESSWITHERROR == evt->m_retcode)//creating the dialog box to tell the user about the error that were there
 		HandleError();
 	
@@ -653,6 +655,9 @@ ImportBatch::HandleError()
     else
         msg.Sprintf(_("Unable to get SQLyog.err file information!"));
 
+	if(GetForegroundWindow() != m_hwnd)
+		FlashWindow(pGlobals->m_pcmainwin->m_hwndmain, TRUE);
+
 	err.Create(m_hwnd, msg.GetString(), errfile);
 
 	return wyFalse;
@@ -799,7 +804,7 @@ CImportError::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_HELP:
-		ShowHelp("http://sqlyogkb.webyog.com/article/235-excute-sql-script");
+		ShowHelp("http://sqlyogkb.webyog.com/article/117-excute-sql-script");
 		return wyTrue;
 
 	case WM_COMMAND:

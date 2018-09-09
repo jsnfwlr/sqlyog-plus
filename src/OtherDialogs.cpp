@@ -36,6 +36,10 @@
 #include "scintilla.h"
 #include "scilexer.h"
 
+#ifndef COMMUNITY
+#include "SCIFormatter.h"
+#endif
+
 extern	PGLOBALS	pGlobals;
 
 #define STYLE "<style type=\"text/css\">\r\n<!--\r\n"\
@@ -116,7 +120,7 @@ CAdvProp::~CAdvProp()
 wyBool
 CAdvProp::Create(HWND hwndparent, Tunnel *tunnel, PMYSQL mysql, wyChar *database, wyChar *tbl)
 {
-	wyInt32	ret;
+	wyInt64	ret;
 
 	m_hwndparent = m_hwndparent;
 	m_mysql = mysql;
@@ -168,7 +172,7 @@ CAdvProp::AdvPropDialogProc(HWND hwnd, wyUInt32 message, WPARAM wparam, LPARAM l
 		return wyTrue;
 		
 	case WM_HELP:
-		ShowHelp("http://sqlyogkb.webyog.com/article/224-advanced-properties");
+		ShowHelp("http://sqlyogkb.webyog.com/article/96-advanced-tab");
 		return wyTrue;
 
 	case WM_INITDLGVALUES:
@@ -354,7 +358,7 @@ CShowValue::~CShowValue()
 wyBool
 CShowValue::Create(HWND hwndparent, Tunnel * tunnel, PMYSQL mysql, wyInt32 valtype)
 {
-	wyInt32	ret;
+	wyInt64	ret;
 
 	m_hwndparent    	= hwndparent;
 	m_mysql		        = mysql;
@@ -431,7 +435,7 @@ CShowValue::ShowValueDialogProc(HWND hwnd, wyUInt32 message, WPARAM wparam, LPAR
 		break;
 
 	case WM_HELP:
-		ShowHelp("http://sqlyogkb.webyog.com/article/331-environment-variables");
+		ShowHelp("http://sqlyogkb.webyog.com/article/132-environment-variables");
 		return 1;		
 	
 	case WM_CONTEXTMENU:
@@ -833,7 +837,7 @@ CSchema::~CSchema()
 wyBool
 CSchema::Build(CQueryObject *pcqueryobject, Tunnel * tunnel, PMYSQL mysql, HTREEITEM hitem)
 {
-	wyInt32		ret;
+	wyInt64		ret;
 	TVITEM		tvi;
     wyWChar      dbname[SIZE_512] = {0};
 	
@@ -883,7 +887,7 @@ CSchema::SchemaDialogProc(HWND hwnd, wyUInt32 message, WPARAM wparam, LPARAM lpa
 		break;
 
 	case WM_HELP:
-		ShowHelp("http://sqlyogkb.webyog.com/article/238-database-schema");
+		ShowHelp("http://sqlyogkb.webyog.com/article/119-database-schema");
 		return wyTrue;
 
 	case UM_CREATESCHEMA:
@@ -1579,7 +1583,7 @@ wyBool
 CCopyTable::Create(HWND hwndparent, Tunnel *tunnel, PMYSQL umysql, wyChar *db, 
 				   wyChar *table, HTREEITEM hitemtable, HTREEITEM hitemdb)
 {
-	wyInt32         ret;
+	wyInt64         ret;
 	TVITEM			tvi;
 	TVINSERTSTRUCT	tvins;
 	HTREEITEM		hitemnew;
@@ -1691,7 +1695,7 @@ CCopyTable::CopyTableDialogProc(HWND hwnd, wyUInt32 message, WPARAM wparam, LPAR
 		break;
 
 	case WM_HELP:
-		ShowHelp("http://sqlyogkb.webyog.com/article/221-copy-table-to-different-host");
+		ShowHelp("http://sqlyogkb.webyog.com/article/105-copy-table-to-different-host");
 		return wyTrue;
 
 	case WM_COMMAND:
@@ -1730,16 +1734,13 @@ CCopyTable::InitWindows(HWND hwnd)
 	// Set some initial property of the windows in the dialog.
 	SendMessage(m_hwndlist, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_CHECKBOXES, LVS_EX_CHECKBOXES);
 	// add to persist list
-	m_p->Add(hwnd, IDC_ALLFIELDS, "AllFields", "1", CHECKBOX);
-	m_p->Add(hwnd, IDC_ALLINDEX, "Index", "1", CHECKBOX);
 	m_p->Add(hwnd, IDC_STRUC, "Structure", "0", CHECKBOX);
 	m_p->Add(hwnd, IDC_STRUCDATA, "StrucData", "1", CHECKBOX);
 
-	// by deafult if IDC_ALLFIELDS is unchecked then we have to enable the column list window
-	if(BST_UNCHECKED == Button_GetCheck(GetDlgItem(hwnd, IDC_ALLFIELDS)))
-		EnableWindow(m_hwndlist, TRUE);
-	else
-		EnableWindow(m_hwndlist, FALSE);
+	SendMessage(GetDlgItem(hwnd, IDC_ALLINDEX), BM_SETCHECK, BST_CHECKED, 0);
+	SendMessage(GetDlgItem(hwnd, IDC_ALLFIELDS), BM_SETCHECK, BST_CHECKED, 0);
+
+	EnableWindow(m_hwndlist, FALSE);
 	
 	SendMessage(hwndedit, EM_LIMITTEXT, 64, 0);
 
@@ -2852,7 +2853,7 @@ CCopyTable::OnPaint(HWND hwnd)
 
 TableDiag::TableDiag(HWND hwndparent, Tunnel * tunnel, PMYSQL mysql)
 {
-	wyInt32				ret;
+	wyInt64				ret;
 
 	m_mysql         =   mysql;
 	m_tunnel        =   tunnel;
@@ -2900,7 +2901,7 @@ TableDiag::TableDlgProc(HWND phwnd, wyUInt32 pmessage, WPARAM pwparam, LPARAM pl
 		break;
 
 	case WM_HELP:
-		ShowHelp("http://sqlyogkb.webyog.com/article/335-table-diagnostics");
+		ShowHelp("http://sqlyogkb.webyog.com/article/109-table-diagnostics");
 		return wyTrue;		
 
 	case WM_COMMAND:
@@ -3265,7 +3266,7 @@ TableDiag::DiagOptimize()
 		ShowMySQLError(m_hwndparent, m_tunnel, m_mysql, query.GetString());
 		return wyFalse;
 	}
-
+	
 	csi.ShowInfo(m_hwnd, m_tunnel, myres, _(" Table Diagnostics Information"));
 	SetCursor(LoadCursor(NULL, IDC_ARROW));
 	m_tunnel->mysql_free_result(myres);
@@ -3547,7 +3548,7 @@ CShowInfo::~CShowInfo()
 wyBool 
 CShowInfo::ShowInfo(HWND hwndparent, Tunnel * tunnel, MYSQL_RES * myres, wyChar *title, wyChar *summary)
 {
-	wyInt32     ret;
+	wyInt64     ret;
 
 	m_hwndparent    = hwndparent;
 	
@@ -3569,6 +3570,9 @@ CShowInfo::ShowInfo(HWND hwndparent, Tunnel * tunnel, MYSQL_RES * myres, wyChar 
 
 	//Post 8.01
     //RepaintTabModule();
+
+	if( GetForegroundWindow() != hwndparent)
+		FlashWindow(pGlobals->m_pcmainwin->m_hwndmain, TRUE);
 
 	ret = DialogBoxParam(pGlobals->m_hinstance, MAKEINTRESOURCE(IDD_SHOWINFO),
 		hwndparent, CShowInfo::DlgProc, (LPARAM)this);
@@ -3598,7 +3602,7 @@ CShowInfo::DlgProc(HWND hwnd, wyUInt32 message, WPARAM wParam, LPARAM lparam)
 	
 	case WM_HELP:
 		if(csi->m_res)
-			ShowHelp("http://sqlyogkb.webyog.com/article/331-environment-variables");
+			ShowHelp("http://sqlyogkb.webyog.com/article/132-environment-variables");
 		return wyTrue;
 
 	case WM_COMMAND:
@@ -3854,7 +3858,7 @@ CShowWarning::WndProc(HWND hwnd, wyUInt32 message, WPARAM wparam, LPARAM lparam)
 		break;
 
 	case WM_HELP:
-		ShowHelp("http://sqlyogkb.webyog.com/article/217-import-csv-data-using-load-local");
+		ShowHelp("http://sqlyogkb.webyog.com/article/100-import-csv-data-using-load-local");
 		return wyTrue;
 
 	case WM_COMMAND:
@@ -4085,7 +4089,6 @@ wyInt32
 TableDiag::TableDlgProcCommand(HWND phwnd, TableDiag *pctablediag, WPARAM pwparam, LPARAM plparam)
 {
     HWND hwnd = NULL;
-
 	switch(LOWORD(pwparam))
 	{
 	case IDOK:
@@ -4422,7 +4425,7 @@ EmptyDB::EmptyDBDialogProc(HWND hwnd, wyUInt32 message, WPARAM wparam, LPARAM lp
 		return wyTrue;
 		
 	case WM_HELP:
-		ShowHelp("http://sqlyogkb.webyog.com/article/237-empty-database");
+		ShowHelp("http://sqlyogkb.webyog.com/article/118-empty-database");
 		return wyTrue;
 
 	case WM_INITDLGVALUES:
@@ -4887,14 +4890,24 @@ QueryPreview::InitDlg()
 	//Set scintilla properties
 	if(wnd)
     {
-	SetScintillaModes(hwndedit, wnd->m_keywordstring, wnd->m_functionstring, wyTrue);
+		SetScintillaModes(hwndedit, wnd->m_keywordstring, wnd->m_functionstring, wyTrue);
     }
     else if(m_pkeywords && m_pfunctions)
     {
         SetScintillaModes(hwndedit, *m_pkeywords, *m_pfunctions, wyTrue);
     }
 	
-	SendMessage(hwndedit, SCI_SETTEXT, m_query.GetLength(),(LPARAM)m_query.GetString());
+	//Format query
+#ifdef COMMUNITY
+	pGlobals->m_pcmainwin->m_connection->FormateAllQueries(wnd,
+		hwndedit, (wyChar *) m_query.GetString(), ALL_QUERY);
+#else
+	SendMessage(hwndedit, SCI_SETTEXT, m_query.GetLength(), (LPARAM)m_query.GetString());
+
+	Format(hwndedit, IsStacked(), GetLineBreak() ? wyFalse : wyTrue, FORMAT_ALL_QUERY, GetIndentation());
+	SendMessage(hwndedit, SCI_SETSELECTIONSTART, (WPARAM)0, 0);
+	SendMessage(hwndedit, SCI_SETSELECTIONEND, (WPARAM)0, 0);
+#endif
 
 	SendMessage(hwndedit, SCI_SETREADONLY, true, 0);
 
@@ -5587,7 +5600,7 @@ ConnColorDlg::ConnColorDlgProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lp
 		break;
 
 	case WM_HELP:
-		ShowHelp("http://sqlyogkb.webyog.com/article/158-advanced-connection-settings");
+		ShowHelp("http://sqlyogkb.webyog.com/article/33-advanced-connection-settings");
 		return 1;
 
 		

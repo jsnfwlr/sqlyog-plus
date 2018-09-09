@@ -17,8 +17,6 @@
 */
 
 
-#define _WIN32_WINNT   0x500
-
 #include <shlobj.h>
 
 #include "FrameWindowHelper.h"
@@ -290,7 +288,7 @@ EscapeChar::~EscapeChar()
 wyBool 
 EscapeChar::GetEscapeChar(HWND hwndparent, PESCAPECHAR pesc, wyBool type, wyBool choice)
 {
-	wyInt32 ret;
+	wyInt64 ret;
 
 	m_hwndparent    = hwndparent;
 	m_pesc          = pesc;
@@ -732,7 +730,7 @@ BackUp::~BackUp()
 wyBool
 BackUp::Create(HWND hwndparent, Tunnel * tunnel, PMYSQL mysql, wyChar *db)
 {
-	wyInt32 ret;
+	wyInt64 ret;
 	
 	m_hwndparent = hwndparent;
 	m_mysql      = mysql;
@@ -775,7 +773,7 @@ BackUp::DlgProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_HELP:
-		ShowHelp("http://sqlyogkb.webyog.com/article/234-backup-database-as-sql-dump");
+		ShowHelp("http://sqlyogkb.webyog.com/article/116-backup-database-as-sql-dump");
 		return TRUE;
 
 	case UM_BACKUPTABLE:
@@ -1082,7 +1080,7 @@ CExportResultSet::~CExportResultSet()
 wyBool  
 CExportResultSet::Export(HWND hwndparent, MySQLDataEx *ptr, wyBool fromquery, wyBool isenablesqlexport)
 {
-	wyInt32		ret;
+	wyInt64		ret;
 
     if(ptr == NULL)
         return wyFalse;
@@ -1166,7 +1164,7 @@ CExportResultSet::DlgProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_HELP:
-		ShowHelp("http://sqlyogkb.webyog.com/article/215-export-data");
+		ShowHelp("http://sqlyogkb.webyog.com/article/98-export-data");
 		return 1;
 
 	case WM_COMMAND:
@@ -2243,6 +2241,9 @@ CExportResultSet::StartCSVExport(StopExport *resultset)
 
 	ret = resultset->m_exportresultset->SaveDataAsCSV(resultset->m_exportresultset->m_hfile);
 
+	if(m_hwnd)
+		FlashIfInactive(m_hwnd);
+
 	VERIFY(CloseHandle(resultset->m_exportresultset->m_hfile));
 	
 	if(ret)
@@ -2275,6 +2276,10 @@ CExportResultSet::StartExcelExport(StopExport *resultset)
 
     ret = resultset->m_exportresultset->SaveDataAsEXCEL(multisheet, bloblimit, decimalplaces);
 	VERIFY(CloseHandle(resultset->m_exportresultset->m_hfile));
+
+	if(m_hwnd)
+		FlashIfInactive(m_hwnd);
+
 	if(ret)
     {
 	ret1 = yog_message(resultset->m_exportresultset->m_hwnd, _(L"Data exported successfully. Would you like to open file?"), pGlobals->m_appname.GetAsWideChar(), MB_YESNO | MB_ICONQUESTION);
@@ -2379,7 +2384,16 @@ CExportResultSet::SaveDataAsSQL()
 
     retval = exportdata.StartSQLExport(&data);
 
+	if(m_hwnd)
+		FlashIfInactive(m_hwnd);
+
     return retval;
+}
+
+void CExportResultSet::FlashIfInactive(HWND hwnd)
+{
+	if( GetForegroundWindow() != hwnd)
+		FlashWindow(pGlobals->m_pcmainwin->m_hwndmain, TRUE);
 }
 
 /*
@@ -2556,6 +2570,9 @@ CExportResultSet::SaveDataAsXML(HANDLE hfile)
 	buffer.Add("</data>");
 	
 	ret = WriteFile(hfile, buffer.GetString(), buffer.GetLength(), &dwbyteswritten, NULL);
+
+	if(m_hwnd)
+		FlashIfInactive(m_hwnd);
 	
 	if(ret == FALSE)
 	{
@@ -2572,7 +2589,7 @@ CExportResultSet::SaveDataAsXML(HANDLE hfile)
 wyBool 
 	CExportResultSet::SaveDataAsJson(HANDLE hfile)
 {
-		wyUInt32		j,k,count;
+	wyUInt32		j,count;
 	BOOL			ret;
 	DWORD			dwbyteswritten;
     wyInt32         messagecount = 0;
@@ -2584,7 +2601,7 @@ wyBool
 	MYSQL_FIELD		*myfield;
 	MYSQL_ROWEX	    *tmp = NULL;
 	MYSQL_ROWS		*rowswalker = NULL;
-
+	wyString		temp;
 	myres			= m_res;
 	myfield			= m_field;
 	SetCursor(LoadCursor(NULL, IDC_WAIT));
@@ -2658,27 +2675,9 @@ wyBool
 			buffer.Add(",\r\n");
 
 			buffer.Add("\"");
-			
-			// we output the fields but before we check if there is a space in between.
-			k=0;
-
-			while(myfield[j].name[k])
-			{
-				switch(myfield[j].name[k])
-				{
-				case C_SPACE:
-					buffer.Add("_");
-					break;
-
-				default:
-					buffer.AddSprintf("%c", *(myfield[j].name+k));
-					break;
-				}
-				
-				k++;
-			}
-
-			
+			temp.SetAs(myfield[j].name);
+			temp.JsonEscape();
+			buffer.Add(temp.GetString());
 			buffer.Add("\":");
 			
 			if(myrow[j] != NULL)
@@ -2694,7 +2693,9 @@ wyBool
 				
 			    {
 						buffer.Add("\"");
-						buffer.Add(myrowstr.GetString());
+						temp.SetAs(myrowstr.GetString());
+						temp.JsonEscape();
+						buffer.Add(temp.GetString());
 						buffer.Add("\"");
 				}
 			}
@@ -2731,6 +2732,11 @@ wyBool
 	
 	ret = WriteFile(hfile, buffer.GetString(), buffer.GetLength(), &dwbyteswritten, NULL);
 	
+	
+	if(m_hwnd)
+		FlashIfInactive(m_hwnd);
+
+
 	if(ret == FALSE)
 	{
 		DisplayErrorText(GetLastError(), _("Error writing in file."));
@@ -2989,7 +2995,7 @@ CExportResultSet::SaveDataAsCSV(HANDLE hfile)
 	{
 		if(iswritten == wyFalse && (charset == CPI_UTF8B ) )
 			{
-				if(charset == CPI_UTF8B)
+				//if(charset == CPI_UTF8B)
 					ret = WriteFile(hfile, Header, 3, &dwbytesread, NULL);
 				/*if(charset == CPI_UTF16LE)
 					ret = WriteFile(hfile, Headerle, 2, &dwbytesread, NULL);
@@ -3207,6 +3213,10 @@ CExportResultSet::SaveDataAsHTML(HANDLE hfile)
 	ret = WriteFile(hfile, buffer.GetString(), buffer.GetLength(), &dwbyteswritten, NULL);
 	
 	buffer.Clear();
+
+	
+	if(m_hwnd)
+		FlashIfInactive(m_hwnd);
 
 	if(ret == FALSE)
 	{

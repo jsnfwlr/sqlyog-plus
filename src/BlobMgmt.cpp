@@ -17,8 +17,6 @@
 */
 // Modified and Functions aded By Manohar.s 
 
-#define _WIN32_WINNT   0x500
-
 #include "Global.h"
 #include "BlobMgmt.h"
 #include "MDIWindow.h"
@@ -68,7 +66,7 @@ BlobMgmt::~BlobMgmt()
 wyBool 
 BlobMgmt::Create(HWND hwndParent, PINSERTUPDATEBLOB pib, wyBool edit)
 {
-	wyInt32     ret;
+	wyInt64     ret;
     MDIWindow   *wnd = GetActiveWin();
 
 	m_piub			=	pib;

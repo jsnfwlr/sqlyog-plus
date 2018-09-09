@@ -105,9 +105,9 @@ extern	PGLOBALS		pGlobals;
 #define			TABBED_INTERFACE_HEIGHT	25
 #define         TABBED_INTERFACE_TOP_PADDING    10
 
-#define			SCHEMA_DESCRIPTION "12.34"
-#define			SCHEMA_MAJOR_VERSION "12"
-#define			SCHEMA_MINOR_VERSION "34"
+#define			SCHEMA_DESCRIPTION "13.00"
+#define			SCHEMA_MAJOR_VERSION "13"
+#define			SCHEMA_MINOR_VERSION "00"
 
 #define			CONSAVE_INTERVAL	10000
 /* some of the features are not available when you connect using tunneling feature */
@@ -248,13 +248,13 @@ FrameWindow::~FrameWindow()
         
 	VERIFY(ImageList_Destroy(m_hsecondiml));
 	VERIFY(ImageList_Destroy(m_hcomboiml));
-	VERIFY(delete m_pcfavoritemenu);
-	VERIFY(delete m_pcaddfavorite);
-	VERIFY(delete m_pcorganizefavorite);
+	delete m_pcfavoritemenu;
+	delete m_pcaddfavorite;
+	delete m_pcorganizefavorite;
 
 #ifdef COMMUNITY
 	if(m_commribbon)
-		VERIFY(delete m_commribbon);
+		delete m_commribbon;
 #endif
 	if(m_connection->m_enttype == ENT_TRIAL)
 	{
@@ -262,7 +262,7 @@ FrameWindow::~FrameWindow()
 		DeleteObject(m_trialtextfont);
 		//DeleteObject(m_trialbuybrush);
 	}
-    VERIFY(delete m_connection);
+    delete m_connection;
 
 	if(m_conntab)
 	{
@@ -1366,27 +1366,27 @@ FrameWindow::WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 			VERIFY(wnd = GetActiveWin());
 
 			if(!wnd)
-				ShowHelp("http://sqlyogkb.webyog.com/category/149-getting-started");
+				ShowHelp("http://sqlyogkb.webyog.com/category/22-getting-started");
 			else
 			{
 				tabimageid = wnd->m_pctabmodule->GetActiveTabImage();
 
 				//If user presses Help in dialog of SchemaDesigner
 				if(tabimageid == IDI_SCHEMADESIGNER_16)
-					ShowHelp("http://sqlyogkb.webyog.com/article/267-the-sqlyog-schema-designer");
+					ShowHelp("http://sqlyogkb.webyog.com/article/166-the-sqlyog-schema-designer");
 			
 				//If user presses Help in dialog of QueryBuilder
 				else if(tabimageid == IDI_QUERYBUILDER_16)
-					ShowHelp("http://sqlyogkb.webyog.com/article/186-the-sqlyog-query-builder");
+					ShowHelp("http://sqlyogkb.webyog.com/article/58-the-sqlyog-query-builder");
 				else
 				{
 					//Spatial data type err dialog is present,if user preeses the Help in that dialog
 					if(pcmainwin->m_iserrdlg == wyTrue)
-						ShowHelp("http://sqlyogkb.webyog.com/article/218-data-manipulation");
+						ShowHelp("http://sqlyogkb.webyog.com/article/102-data-manipulation");
                     else if(pcmainwin->m_isredindexhelp == wyTrue)
-                        ShowHelp("http://sqlyogkb.webyog.com/article/209-redundant-index-analyzer");
+                        ShowHelp("http://sqlyogkb.webyog.com/article/82-redundant-index-analyzer");
 					else
-						ShowHelp("http://sqlyogkb.webyog.com/category/149-getting-started");
+						ShowHelp("http://sqlyogkb.webyog.com/category/22-getting-started");
 				}	
 			}
 			return wyTrue;
@@ -1413,7 +1413,7 @@ FrameWindow::WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 		{
             PostMessage(pcmainwin->m_hwndrestorestatus, UM_CLOSE_RESTORE_STATUS, 0, 0);
 			KillTimer(hwnd, CONRESTORE_TIMER);
-			if(pGlobals->m_pcquerywnd !=NULL && pGlobals->m_pcquerywnd->m_pcqueryobject!=NULL)
+			if(pGlobals && pGlobals->m_pcquerywnd !=NULL && pGlobals->m_pcquerywnd->m_pcqueryobject!=NULL)
 			{
 				if(pGlobals->m_database.GetLength())
 				{
@@ -1743,10 +1743,12 @@ FrameWindow::CreateToolBarWindow()
 	HWND	 hwndtool;
 	wyUInt32 exstyle = NULL;
 	wyUInt32 style   = TBSTYLE_CUSTOMERASE | WS_CHILD | CCS_NORESIZE | CCS_NOPARENTALIGN | TBSTYLE_FLAT | TBSTYLE_TOOLTIPS | TBSTYLE_TRANSPARENT | CCS_NODIVIDER;
-	WNDPROC wndproc;
 	wyUInt32 daysleft = TRIAL_DAYS_LEFT;
 	static const char * (CDECL *pwine_get_version)(void);
+#ifndef COMMUNITY
+	WNDPROC wndproc;
 	HMODULE hntdll;
+#endif
 
 	//Make sure destroy all toolbar resources during the chage of icon size
 	DestroyToolBarResources();
@@ -2924,6 +2926,12 @@ pGlobals->m_pcmainwin->m_closealltrans = 1;
 	    if(hwndactive)
             HandleOnRefresh(pcquerywnd);
 		break;
+
+	case IDM_COLLAPSEOBJECT:
+		if (hwndactive)
+			HandleOnCollapse(pcquerywnd);
+		break;
+
 	case ACCEL_REFRESH:
         if(hwndactive)
 			HandleOnRefreshExecuteQuery(hwndactive, pcquerywnd, wParam, wyTrue);
@@ -4977,7 +4985,7 @@ FrameWindow::OnActiveConn()
 								IDM_FILE_SAVESQL, IDM_FILE_SAVEAS,
 								IDM_EDIT_UNDO, IDM_EDIT_REDO, IDM_EDIT_CUT, IDM_EDIT_COPY, IDM_COPYNORMALIZED,
                                 IDM_EDIT_PASTE, IDM_EDIT_SELECTALL, IDM_EDIT_FIND, IDM_EDIT_FINDNEXT, 
-								IDM_EDIT_REPLACE, IDM_EDIT_GOTO, IDM_REFRESHOBJECT, IDM_OBCOLOR , ID_EDIT_INSERTTEMPLATES, 
+								IDM_EDIT_REPLACE, IDM_EDIT_GOTO, IDM_REFRESHOBJECT, IDM_COLLAPSEOBJECT, IDM_OBCOLOR , ID_EDIT_INSERTTEMPLATES,
 								IDM_EDIT_RESULT_TEXT, IDC_EDIT_SHOWOBJECT, IDC_EDIT_SHOWRESULT, 
 								IDC_EDIT_SHOWEDIT, IDM_EDIT_ADVANCED_UPPER, IDM_EDIT_ADVANCED_LOWER,
 								IDM_EDIT_ADVANCED_COMMENT, IDM_EDIT_ADVANCED_REMOVE, IDM_DB_REFRESHOBJECT, ID_DATASEARCH,
@@ -7035,7 +7043,7 @@ FrameWindow::OnWmClose(HWND hwnd)
 #ifndef COMMUNITY
     HWND    hwndvdd;
 	wyString  vddmsg;
-	if(pGlobals->m_pcmainwin->m_closealltrans != IN_TRANSACTION);
+	if(pGlobals->m_pcmainwin->m_closealltrans != IN_TRANSACTION)
 		pGlobals->m_pcmainwin->m_closealltrans = 1;
 #endif
 
@@ -7148,9 +7156,8 @@ FrameWindow::OnWmInitPopup(WPARAM wparam, LPARAM lparam)
 		{
 			return wyTrue;
 		}
-		if(!(lstyle & WS_MAXIMIZE))
-			menuindex++;
-		else if(menuindex == 0 && (wnd->m_executing == wyTrue || wnd->m_pingexecuting == wyTrue))
+
+		if (menuindex == 0 && (wnd->m_executing == wyTrue || wnd->m_pingexecuting == wyTrue))
             return wyTrue;
 
         iswindowmenu = m_connection->IsWindowMenu(menuindex);
@@ -7945,6 +7952,14 @@ FrameWindow::HandleOnRefresh(MDIWindow *pcquerywnd)
     return;
 }
 
+void
+FrameWindow::HandleOnCollapse(MDIWindow *pcquerywnd)
+{
+	pcquerywnd->m_pcqueryobject->CollapseObjectBrowser(pcquerywnd->m_pcqueryobject->m_hwnd);
+	SetFocus(pcquerywnd->m_pcqueryobject->m_hwnd);
+	return;
+}
+
 wyInt32 
 FrameWindow::OnWmSize(WPARAM wparam)
 {
@@ -8005,7 +8020,7 @@ void
 FrameWindow::OnCreateDatabase(HWND hwndactive, MDIWindow *wnd)
 {
 	wyWChar     *dbname;
-	wyInt32		ret;
+	wyInt64		ret;
 #ifndef COMMUNITY
 	if(GetActiveWin()  && GetActiveWin()->m_conninfo.m_isreadonly == wyTrue)
 	{
@@ -8041,7 +8056,7 @@ void
 FrameWindow::OnCreateFunction(HWND hwndactive, MDIWindow *wnd)
 {
 	wyWChar     *functionname;
-	wyInt32     ret;
+	wyInt64     ret;
 	HTREEITEM	hfunctionitem;
     wyString    buff;
 	EditorBase	*peditorbase;
@@ -8101,7 +8116,7 @@ void
 FrameWindow::OnCreateProcedure(HWND hwndactive, MDIWindow *wnd)
 {
 	wyWChar     *procedurename;
-	wyInt32     ret;
+	wyInt64     ret;
 	HTREEITEM	hprocedureitem;
     wyString    buff;
 	EditorBase	*peditorbase;
@@ -8160,7 +8175,7 @@ void
 FrameWindow::OnCreateEvent(HWND hwndactive, MDIWindow *wnd)
 {
 	wyWChar     *eventname;
-	wyInt32     ret;
+	wyInt64     ret;
 	HTREEITEM   heventitem;
     wyString    buff;
 	EditorBase	*peditorbase;
@@ -8220,7 +8235,7 @@ void
 FrameWindow::OnCreateView(HWND hwndactive, MDIWindow *wnd, wyString *qbquery)
 {
 	wyWChar     *viewname;
-	wyInt32     ret;
+	wyInt64      ret;
 	HTREEITEM   hviewitem;
     wyString    buff;
 	EditorBase	*peditorbase;
@@ -8280,7 +8295,7 @@ void
 FrameWindow::OnCreateTrigger(HWND hwndactive, MDIWindow *wnd)
 {
 	wyWChar     *triggername;
-	wyInt32     ret;
+	wyInt64     ret;
 	HTREEITEM	htriggeritem;
     wyString    buff;
 	EditorBase	*peditorbase ;
@@ -8348,7 +8363,7 @@ void
 FrameWindow::OnAlterDatabase(HWND hwndactive, MDIWindow *wnd)
 {
 	wyWChar     *dbname;
-	wyInt32		ret;
+	wyInt64		ret;
 	MYSQL_RES	*res;
     wyString    query;
     
@@ -8814,7 +8829,7 @@ FrameWindow::OnCreateObjectWmCommand(HWND hwnd, WPARAM wParam, wyChar *object)
 
 				swprintf(objectname, L"%s", objectstr.GetAsWideChar());
 
-			    VERIFY(yog_enddialog(hwnd, (wyUInt32)objectname));
+			    VERIFY(yog_enddialog(hwnd, (wyInt64)objectname));
 			}
 			else
 				free(objectname);
@@ -9318,7 +9333,7 @@ FrameWindow::EnableToolButtonsAndCombo(HWND hwndtool, HWND hwndsecondtool, HWND 
 
             if(tb1id[i] == IDM_EXECUTE || tb1id[i] == ACCEL_QUERYUPDATE)
             {
-                if(tabicon != IDI_QUERY_16)
+				if(tabicon != IDI_QUERY_16)
                 {
                     state = TBSTATE_INDETERMINATE;
                 }
@@ -9429,27 +9444,27 @@ FrameWindow::OnCreateObjectWmHelp(HWND hwnd, wyChar *object)
 	
 	if(stricmp(object, "createdb") == 0)
 	{
-		ShowHelp("http://sqlyogkb.webyog.com/article/230-create-database");
+		ShowHelp("http://sqlyogkb.webyog.com/article/113-create-database");
 	}
 	else if(stricmp(object, "CreateView")== 0 )
 	{
-		ShowHelp("http://sqlyogkb.webyog.com/article/255-views");
+		ShowHelp("http://sqlyogkb.webyog.com/article/186-views");
 	}
 	else if(stricmp(object, "CreateProcedure")== 0 )
 	{
-		ShowHelp("http://sqlyogkb.webyog.com/article/262-stored-procedures");
+		ShowHelp("http://sqlyogkb.webyog.com/article/188-stored-procedures");
 	}
 	else if(stricmp(object, "CreateFunction")== 0 )
 	{
-		ShowHelp("http://sqlyogkb.webyog.com/article/263-functions");
+		ShowHelp("http://sqlyogkb.webyog.com/article/189-functions");
 	}
 	else if(stricmp(object, "CreateEvent")== 0 )
 	{
-		ShowHelp("http://sqlyogkb.webyog.com/article/265-events");
+		ShowHelp("http://sqlyogkb.webyog.com/article/191-events");
 	}
 	else if(stricmp(object, "CreateTrigger")== 0 )
 	{
-		ShowHelp("http://sqlyogkb.webyog.com/article/264-triggers");
+		ShowHelp("http://sqlyogkb.webyog.com/article/190-triggers");
 	}	
 }
 
@@ -9674,13 +9689,11 @@ FrameWindow::ShowQueryExecToolTip(wyBool show)
 wyBool
 FrameWindow::WriteTabDetailsToTempList(tabeditorelem *temptabeditorele_temp, CTCITEM quetabitem, wyInt32 tabid, wyInt32 position, wyInt32 id, TabTypes *tabactive, MDIWindow *wnd)
 {
-	sqlite3_stmt*   stmt;
 	TabEditor		*tabquery=NULL;
 	wyString		testquery, sqlitequery;
-	wySQLite	*sqliteobj;
 
 #ifndef COMMUNITY
-//if(pGlobals->m_pcmainwin->m_connection->m_enttype != ENT_PRO)
+	//if(pGlobals->m_pcmainwin->m_connection->m_enttype != ENT_PRO)
 	TabQueryBuilder		*tabquerybuilder;	
 	TabSchemaDesigner	*tabschemadesigner;
 #endif
@@ -10039,14 +10052,12 @@ FrameWindow::SaveConnectionDetails(wySQLite	*ssnsqliteobj)
 	
 	wyString	dirstr;
 	
-	tabeditorelem		*temptabeditorele, *deltabeditorele, *temptabeditorele_temp,*deltabeditorele_temp;
+	tabeditorelem		*temptabeditorele, *deltabeditorele, *temptabeditorele_temp;
 	MDIlist				*tempmdilist, *deltempmdilist;
-	MDIlisttemp         *tempmdilist_temp,*deltempmdilist_temp;
-	wyString			*testquery;
+	MDIlisttemp         *tempmdilist_temp;
 	wyInt32				totalconntabs, j, k, l;
 	wyInt32				subtabcount, totalquetabs;
 	TabEditor			*tabquery=NULL;
-	TabHistory			*tabhistory;	
 #ifndef COMMUNITY
 	TabQueryBuilder		*tabquerybuilder;	
 	TabSchemaDesigner	*tabschemadesigner;
@@ -10055,10 +10066,7 @@ FrameWindow::SaveConnectionDetails(wySQLite	*ssnsqliteobj)
 	wyInt32				newid = 0,newqid = 0;
 	sqlite3_stmt*		stmt;
 	wySQLite			*sqliteobj;
-	List				*mdiconlist;
-	SRWLOCK				lock;
-	
-						
+	List				*mdiconlist;					
 
 	sqliteobj = ssnsqliteobj ? ssnsqliteobj : pGlobals->m_sqliteobj;
 	
@@ -10676,14 +10684,13 @@ FrameWindow::SaveConnectionDetails2(wySQLite	*ssnsqliteobj)
 	
 	tabeditorelem		*temptabeditorele;//, *deltabeditorele
 	MDIlist				*tempmdilist;//, *deltempmdilist
-	wyString			 historydata;//*testquery,
+	wyString			 historydata;
 	wyInt32				 k;//, j, l,totalconntabs,
 	wyInt32				subtabcount;//, totalquetabs
 	TabEditor			*tabqueryactive;//*tabquery,
 	TabHistory			*tabhistory;	
 #ifndef COMMUNITY
-	TabQueryBuilder		*tabquerybuilder;	
-	TabSchemaDesigner	*tabschemadesigner;
+//	TabQueryBuilder		*tabquerybuilder;	
 #endif
 	wyString			sqlitequery,sqliteerr,tempstr;
 	wyInt32				newid = 0;//,newqid = 0
@@ -11048,11 +11055,9 @@ ConnectFromList(wyString* failedconnections, wyString* sessionfile)
     
 	wyString		pathstr, connstr, sectionstring,temptest;
 	
-	
 	HANDLE *thread_handle_l;
 	MY_ARG *my_arg;
 	wyIni inimgr;
-	
 	
 	wyBool	isfileopen = wyTrue/*, isinitfired=wyFalse*/;
 	
@@ -11067,10 +11072,14 @@ ConnectFromList(wyString* failedconnections, wyString* sessionfile)
 	tabdetailelem  *temptabdetail;
 	tabeditorelem  *temptabeditorele;
 	TabHistory *tabhistory;
+
+#ifndef COMMUNITY
 	TiXmlDocument		*doc;
 	TabQueryBuilder *tabquerybuilder;
     TabSchemaDesigner	*tabschemadesigner;
-//	HTREEITEM hitem;
+#endif
+	
+	//	HTREEITEM hitem;
 	const wyChar    *colval = NULL;
 
 	//if(sessionfile == NULL)
@@ -11636,8 +11645,6 @@ sessionsavesproc(void *arg)
 			return 0;
 	}
 	
-	
-
 	hfind = FindFirstFile(directory, &fdata);			
 	directoryname.SetAs(directory);
 	pwySQLite=new wySQLite();
@@ -11674,7 +11681,8 @@ sessionsavesproc(void *arg)
 	}
 	else
 	{
-		const wyChar *desc, *majorver , *minorver ;
+		const wyChar *desc = NULL, *majorver , *minorver ;
+
 		sqlitequery.Sprintf("SELECT * from schema_version");
 		pGlobals->m_sqliteobj->Prepare(&res, sqlitequery.GetString()); 
 		if(pGlobals->m_sqliteobj->Step(&res, wyFalse) && pGlobals->m_sqliteobj->GetLastCode() == SQLITE_ROW)
@@ -11684,16 +11692,24 @@ sessionsavesproc(void *arg)
 			minorver = pGlobals->m_sqliteobj->GetText(&res, 2);
 		}
 
-		if(desc != NULL && (strcmp(SCHEMA_MAJOR_VERSION, majorver) != 0 || strcmp(SCHEMA_MINOR_VERSION, minorver) != 0 ))
+		if(desc && desc != NULL && (strcmp(SCHEMA_MAJOR_VERSION, majorver) != 0 || strcmp(SCHEMA_MINOR_VERSION, minorver) != 0 ))
 		{
 			//common option for version changre
 			sqlitequery.SetAs("");
 			sqlitequery.Sprintf("UPDATE schema_version set description = \"%s\", major_version=\"%s\", minor_version = \"%s\"  where description = \"%s\"", SCHEMA_DESCRIPTION, SCHEMA_MAJOR_VERSION, SCHEMA_MINOR_VERSION, desc);
 			pGlobals->m_sqliteobj->Execute(&sqlitequery, &sqliteerr);
-			if(strcmp(SCHEMA_DESCRIPTION, "12.34") == 0)//adding cloumn for readonly in version 12.34
+			int maj = atoi(majorver);
+			int min = atoi(minorver);
+			if(maj <= 12  && min < 34)//adding cloumn for readonly in version 12.34
 			{
 				sqlitequery.SetAs("");
 				sqlitequery.Sprintf("ALTER TABLE conndetails ADD COLUMN 'readonly' INTEGER default 0");
+				pGlobals->m_sqliteobj->Execute(&sqlitequery, &sqliteerr);
+			}
+			if (maj < 13)
+			{
+				sqlitequery.SetAs("");
+				sqlitequery.Sprintf("ALTER TABLE conndetails ADD COLUMN 'rebuild_tags' INTEGER default 1");
 				pGlobals->m_sqliteobj->Execute(&sqlitequery, &sqliteerr);
 			}
 		}
@@ -11892,9 +11908,12 @@ sessionsavesproc(void *arg)
 				}
 				if(WaitForSingleObject(pGlobals->m_pcmainwin->m_sqlyogcloseevent, 0) == WAIT_OBJECT_0 )
 				{
-					ret = pGlobals->m_pcmainwin->SaveConnectionDetails();
-					if(!ret && !pGlobals->m_pcmainwin->m_hwndconntab)
-						ispurge = wyTrue;
+					if(pGlobals->m_pcmainwin)
+					{
+						ret = pGlobals->m_pcmainwin->SaveConnectionDetails();
+						if(!ret && !pGlobals->m_pcmainwin->m_hwndconntab)
+							ispurge = wyTrue;
+					}
 				}
 			
 

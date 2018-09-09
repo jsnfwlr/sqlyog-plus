@@ -34,6 +34,8 @@ Author: Vishal P.R, Janani SriGuha
 #include "BlobMgmt.h"
 #include "EditorFont.h"
 #include "ClientMySQLWrapper.h"
+#include "jsoncpp.h"
+
 #define	DEFAULT_FIELD_SIZE  2
 #define	CHARSET_NUMBER      63
 #define MAXSIZE             1600000
@@ -211,7 +213,7 @@ MySQLDataEx::GetSavedRowCount()
 }
 
 //DataView constructor
-DataView::DataView(MDIWindow *wnd, HWND hwndparent)
+DataView::DataView(MDIWindow *wnd, HWND hwndparent, IQueryBuilder* querybuilder)
 {
     //initialize the members
     InitializeCriticalSection(&m_cs);
@@ -257,6 +259,7 @@ DataView::DataView(MDIWindow *wnd, HWND hwndparent)
     m_extraimages[IMG_INDEX_RESET_FILTER] = IDI_RESETFILTER;
     m_htrackmenu = NULL;
     m_findreplace = NULL;
+	m_querybuilder = querybuilder;
 
     ResetView();
 }
@@ -682,7 +685,7 @@ DataView::OnWMCommand(WPARAM wparam, LPARAM lparam)
                     }
 
                     //execute reset filter
-                    if(m_data->m_psortfilter->BeginFilter(0, NULL, 0, 0, m_hwndframe) == wyTrue)
+                    if(m_data->m_psortfilter->BeginFilter(0, NULL, 0, 0, m_hwndframe, m_querybuilder) == wyTrue)
                     {
                         Execute(TA_REFRESH, wyTrue, wyTrue, LA_FILTER);
                     }
@@ -715,7 +718,7 @@ DataView::OnWMCommand(WPARAM wparam, LPARAM lparam)
 
                     //execute reset filter
 					//m_data->m_psortfilter->BeginColoumnSort(wparam, wyTrue);
-                    //if(m_data->m_psortfilter->BeginFilter(0, NULL, 0, 0, m_hwndframe) == wyTrue)
+                    //if(m_data->m_psortfilter->BeginFilter(0, NULL, 0, 0, m_hwndframe, m_querybuilder) == wyTrue)
                     //{
                     Execute(TA_REFRESH, wyTrue, wyTrue, LA_SORT);
                     //}
@@ -1042,6 +1045,9 @@ DataView::AddDataToQuery(MYSQL_ROW data, wyString &query, const wyChar* delimite
     wyInt32     i, max;
     wyString    colname;
 
+	//from  .ini file
+	m_backtick = AppendBackQuotes() == wyTrue ? "`" : "";
+
     //if valid col is specified then we will add data for that column only
     if(col >= 0)
     {
@@ -1066,10 +1072,10 @@ DataView::AddDataToQuery(MYSQL_ROW data, wyString &query, const wyChar* delimite
             //for not null data
             if(data[i] && strcmp(data[i], "NULL") != 0 && strcmp(data[i], "(NULL)") != 0)
 		    {	
-                query.AddSprintf("%s%s`%s` = ", 
+                query.AddSprintf("%s%s%s%s%s = ", 
                     isfirst == wyFalse ? " " : "",
                     isfirst == wyFalse ? delimiter : "",
-                    colname.GetString());
+                    m_backtick, colname.GetString(), m_backtick);
 
                 //consider interpreting keywords/functions
                 if(ischeckspdata == wyFalse || AppendSpecialDataToQuery(data[i], (wyChar*)colname.GetString(), query) == wyFalse)
@@ -1081,10 +1087,10 @@ DataView::AddDataToQuery(MYSQL_ROW data, wyString &query, const wyChar* delimite
 		    else
             {
                 //add query data for null, for an insert/update query nullcheck is '= NULL', for others it is 'IS NULL'
-			    query.AddSprintf("%s%s`%s` %s", 
+			    query.AddSprintf("%s%s%s%s%s %s", 
                     isfirst == wyFalse ? " " : "",
                     isfirst == wyFalse ? delimiter : "",
-                    colname.GetString(),
+                    m_backtick, colname.GetString(), m_backtick,
                     nullcheck);
             }
 
@@ -1104,6 +1110,8 @@ DataView::AddDataToQueryJSON(MYSQL_ROW data, wyString &query, const wyChar* deli
     wyInt32     i, max;
     wyString    colname;
 
+	//from  .ini file
+	m_backtick = AppendBackQuotes() == wyTrue ? "`" : "";
 
     //if valid col is specified then we will add data for that column only
     if(col >= 0)
@@ -1132,10 +1140,10 @@ DataView::AddDataToQueryJSON(MYSQL_ROW data, wyString &query, const wyChar* deli
 			{
 				if(data[i] && strcmp(data[i], "NULL") != 0 && strcmp(data[i], "(NULL)") != 0)
 		    {	
-                query.AddSprintf("%s%s`%s` = ", 
+                query.AddSprintf("%s%s%s%s%s = ", 
                     isfirst == wyFalse ? " " : "",
                     isfirst == wyFalse ? delimiter : "",
-                    colname.GetString());
+                    m_backtick, colname.GetString(), m_backtick);
 
                 //consider interpreting keywords/functions
                 if(ischeckspdata == wyFalse || AppendSpecialDataToQuery(data[i], (wyChar*)colname.GetString(), query) == wyFalse)
@@ -1147,10 +1155,10 @@ DataView::AddDataToQueryJSON(MYSQL_ROW data, wyString &query, const wyChar* deli
 		    else
             {
                 //add query data for null, for an insert/update query nullcheck is '= NULL', for others it is 'IS NULL'
-			    query.AddSprintf("%s%s`%s` %s", 
+			    query.AddSprintf("%s%s%s%s%s %s", 
                     isfirst == wyFalse ? " " : "",
                     isfirst == wyFalse ? delimiter : "",
-                    colname.GetString(),
+                    m_backtick, colname.GetString(), m_backtick,
                     nullcheck);
             }
 
@@ -1171,16 +1179,16 @@ DataView::AddDataToQueryJSON(MYSQL_ROW data, wyString &query, const wyChar* deli
                     //if it is not special data or we dont want to consider special data, then add the raw data to query
                     AppendDataToQuery(data, i, m_data->m_datares->field_count, query, isbin);
                 }
-				query.AddSprintf(",`%s`)",colname.GetString());
+				query.AddSprintf(",%s%s%s)", m_backtick, colname.GetString(), m_backtick);
 
             }
 		    else
             {
                 //add query data for null, for an insert/update query nullcheck is '= NULL', for others it is 'IS NULL'
-			    query.AddSprintf("%s%s`%s` %s", 
+			    query.AddSprintf("%s%s%s%s%s %s", 
                     isfirst == wyFalse ? " " : "",
                     isfirst == wyFalse ? delimiter : "",
-                    colname.GetString(),
+                    m_backtick, colname.GetString(), m_backtick,
                     nullcheck);
             }
 			}
@@ -1217,12 +1225,17 @@ DataView::GenerateInsertQuery(wyString &query)
     wyChar*         fieldarray;    
     MYSQL_ROW       myrow;
     MYSQL_ROWEX*    myrowex;
-    
+
+	//from  .ini file
+	m_backtick = AppendBackQuotes() == wyTrue ? "`" : "";
+
     fieldarray = new wyChar[m_data->m_datares->field_count];  
     myrowex = m_data->m_rowarray->GetRowExAt(m_data->m_modifiedrow);
     memset(fieldarray, myrowex && (myrowex->m_state & ROW_DUPLICATE) ? 1 : 0, m_data->m_datares->field_count * sizeof(wyChar));    
     
-    query.Sprintf("insert into `%s`.`%s` (", m_data->m_db.GetString(), m_data->m_table.GetString());
+    query.Sprintf("insert into %s%s%s.%s%s%s (", 
+		m_backtick, m_data->m_db.GetString(), m_backtick, 
+		m_backtick, m_data->m_table.GetString(), m_backtick);
 
     //loop through columns
 	for(i = 0, k = 0; i < m_data->m_datares->field_count; i++)
@@ -1252,12 +1265,12 @@ DataView::GenerateInsertQuery(wyString &query)
 
             //add column name
             GetColumnName(colname, i);
-            query.AddSprintf("%s`%s`", k++ ? ", " : "", colname.GetString());
+            query.AddSprintf("%s%s%s%s", k++ ? ", " : "", m_backtick, colname.GetString(), m_backtick);
         }
 	}
 
     //now we add the values
-    query.Add(") values (");
+    query.Add(")\r\n\tvalues\r\n\t(");
 
     for(i = 0, k = 0; i < m_data->m_datares->field_count; i++)
 	{
@@ -1283,7 +1296,7 @@ DataView::GenerateInsertQuery(wyString &query)
         }
     }
 
-	query.Add(")");
+	query.Add(");\r\n");
     delete[] fieldarray;
     return wyTrue;
 }
@@ -1296,7 +1309,12 @@ DataView::GenerateDeleteQuery(wyString& query, wyBool issetlimit, wyUInt32 row)
     wyInt32     i, pkcount = 0;
     wyBool      isfirst = wyTrue, isanyprimary;
 
-    query.Sprintf("delete from `%s`.`%s` where ", m_data->m_db.GetString(), m_data->m_table.GetString());
+	//from  .ini file
+	m_backtick = AppendBackQuotes() == wyTrue ? "`" : "";
+
+    query.Sprintf("delete from %s%s%s.%s%s%s where ", 
+		m_backtick, m_data->m_db.GetString(), m_backtick,
+		m_backtick, m_data->m_table.GetString(), m_backtick);
     isanyprimary = IsAnyPrimary(m_wnd->m_tunnel, m_data->m_keyres, &pkcount);
 
     //if the table has any primary key defined, then we will use only that in our where clause
@@ -1364,9 +1382,13 @@ DataView::GenerateUpdateQuery(wyString &query, wyBool issetlimit)
     {
         return wyFalse;
     }
+	//from  .ini file
+	m_backtick = AppendBackQuotes() == wyTrue ? "`" : "";
 
     isanyprimary = IsAnyPrimary(m_wnd->m_tunnel, m_data->m_keyres, &pkcount);
-    query.Sprintf("update `%s`.`%s` set ", m_data->m_db.GetString(), m_data->m_table.GetString());
+    query.Sprintf("update %s%s%s.%s%s%s set ", 
+		m_backtick, m_data->m_db.GetString(), m_backtick,
+		m_backtick, m_data->m_table.GetString(), m_backtick);
 
     //loop throgh the columns adding only the columns that are updated
 	for(isfirst = wyTrue, i = 0; i < m_data->m_datares->field_count ; i++)
@@ -1414,7 +1436,7 @@ DataView::GenerateUpdateQuery(wyString &query, wyBool issetlimit)
         return wyFalse;
     }
 
-	query.Add(" where ");
+	query.Add("\r\n\twhere\r\n\t");
 
     //if the table has any primary key, then we need to add only those fields in the where clause
 	if(isanyprimary)
@@ -1449,6 +1471,7 @@ DataView::GenerateUpdateQuery(wyString &query, wyBool issetlimit)
 	}
 
     query.Add(tempstr.GetString());
+	query.Add(";\r\n");
     return wyTrue;
 }
 
@@ -3452,7 +3475,11 @@ DataView::HandleBlobValue(WPARAM wparam, LPARAM lparam)
     wyUInt32            len = 0;
 	wyInt32				offset = 0, row = 0, col = 0, isdataupdated = 0;
     wyBool              ret = wyFalse, isedit;
-	wyString            datastr;		    
+	wyString            datastr;
+	wyWChar				directory[MAX_PATH + 1] = { 0 };
+	wyWChar				*lpfileport = 0;
+	wyInt32				jsonOpt;
+	wyString			dirstr;
 
     //get the selected row and column
     row = CustomGrid_GetCurSelRow(m_hwndgrid);
@@ -3475,18 +3502,41 @@ DataView::HandleBlobValue(WPARAM wparam, LPARAM lparam)
 		pib.m_isnull = (lparam == 0) ? wyTrue : wyFalse;
     }
 
-	//if data is there then we make a copy of it.
-	if(pib.m_data)
-    {
-		data = (wyChar*)calloc(sizeof(wyChar), len + 1);
-		memcpy(data, pib.m_data, len);
-        pib.m_data = data;
-		pib.m_datasize = len;
-	}
-
 	//to check whether it is a blob or text
 	pib.m_isblob = IsBlob(col);
 	pib.m_isJson = IsJSON(col);
+
+	// Get the complete path.
+	SearchFilePath(L"sqlyog", L".ini", MAX_PATH, directory, &lpfileport);
+	dirstr.SetAs(directory);
+	jsonOpt = wyIni::IniGetInt(GENERALPREFA, "JsonFormat", 0, dirstr.GetString());
+
+	//if data is there then we make a copy of it.
+	if(pib.m_data)
+    {
+		Json::Reader reader;
+		Json::Value jvalue;
+
+		if (pib.m_isJson && (0 != jsonOpt) && reader.parse(pib.m_data, pib.m_data + len, jvalue))
+		{
+			JSONCPP_STRING		jsonValue; // This will get automatically freed
+
+			jsonValue = jvalue.toStyledString();
+
+			data = (wyChar*)calloc(sizeof(wyChar), jsonValue.length() + 1);
+			memcpy(data, jsonValue.c_str(), jsonValue.length());
+			pib.m_data = data;
+			pib.m_datasize = jsonValue.length();
+		}
+		else
+		{
+			data = (wyChar*)calloc(sizeof(wyChar), len + 1);
+			memcpy(data, pib.m_data, len);
+			pib.m_data = data;
+			pib.m_datasize = len;
+		}
+	}
+
 	 //show blob
     ret = biu.Create(m_hwndgrid, &pib, isedit);
 
@@ -5911,7 +5961,7 @@ DataView::GetViewData(wyBool selected)
 	wyChar		    encl;
 	wyBool 			isescaped, isfterm, islterm, isencl;
 	INT64			numfields, i;
-	wyUInt32    	len[3400] = {0}, rowcount, j, lenwchar = 1;
+	wyUInt32    	len[4096] = {0}, rowcount, j, lenwchar = 1; // changed the max allowed number of column per table from 3400 to 4096
 	wyUInt32		*length, nsize, esclen;
 	LPWSTR			lpstrcopy = NULL;
 	HGLOBAL			hglbcopy;
@@ -6259,7 +6309,7 @@ DataView::WriteFixed(HGLOBAL* hglobal, LPWSTR* buffer, wyUInt32 * nsize, wyChar 
 	wyWChar		*padwchar = NULL;
 	wyUInt32	padlen = 1;
 
-	if(field->type >= FIELD_TYPE_TINY_BLOB && field->type <= FIELD_TYPE_BLOB  ||  field->type == FIELD_TYPE_JSON)
+	if(field->type >= FIELD_TYPE_TINY_BLOB && field->type <= FIELD_TYPE_BLOB  ||  field->type == MYSQL_TYPE_JSON)
     {
 		return wyTrue;
     }
@@ -7126,7 +7176,7 @@ DataView::CreateColumns(wyBool isupdate)
         }
 		
         //if it is blob
-		if((fields[k].type >= FIELD_TYPE_TINY_BLOB) && (fields[k].type <= FIELD_TYPE_BLOB) || fields[k].type == FIELD_TYPE_JSON)
+		if((fields[k].type >= FIELD_TYPE_TINY_BLOB) && (fields[k].type <= FIELD_TYPE_BLOB) || fields[k].type == MYSQL_TYPE_JSON)
         {
             //add blob mask
             gvcol.mask |= GVIF_TEXTBUTTON;
@@ -7135,7 +7185,7 @@ DataView::CreateColumns(wyBool isupdate)
             if(isupdate == wyFalse)
             {
     			index = CustomGrid_InsertColumn(m_hwndgrid, &gvcol);
-			    CustomGrid_SetColumnLongValue(m_hwndgrid, index, 1);
+			    CustomGrid_SetColumnLongValue(m_hwndgrid, index, (LPARAM)1);
             }
 		} 
         //if the column is enum/set
@@ -8402,7 +8452,7 @@ DataView::OnRightClickFilter(wyInt32 action)
         }
     }
 
-    if(m_data->m_psortfilter->BeginFilter(action, data, len, col, m_hwndframe, prect) == wyTrue)
+    if(m_data->m_psortfilter->BeginFilter(action, data, len, col, m_hwndframe, m_querybuilder, prect) == wyTrue)
     {
         Execute(TA_REFRESH, wyTrue, wyTrue, LA_FILTER);
     }

@@ -31,6 +31,8 @@
 #include "TabPreview.h"
 #include "TabTableData.h"
 #include "TableView.h"
+#include "TabIndexes.h"
+#include "TabForeignKeys.h"
 
 #ifndef COMMUNITY
 #include "HelperEnt.h"
@@ -188,7 +190,7 @@ TabModule::Create(MDIWindow * wnd)
 				{
 					CreateAdvEditorTab(wnd, (wyChar *)temptabeditorele->m_psztext.GetString(), temptabdetail->m_iimage, hitem, &temptabeditorele->m_psztext);
 				}
-					temptabeditorele->m_tabptr = (wyInt32)m_pctabeditor;
+					temptabeditorele->m_tabptr = (wyInt64)m_pctabeditor;
 				temptabeditorele->m_pctabeditor = m_pctabeditor;
 				m_pctabeditor->m_pcetsplitter->SetLeftTopPercent(temptabeditorele->m_leftortoppercent);
 				}
@@ -198,7 +200,7 @@ TabModule::Create(MDIWindow * wnd)
 					//create querybuildertab
 #ifndef COMMUNITY
 					CreateQueryBuilderTab(wnd);
-					temptabeditorele->m_tabptr = (wyInt32)m_pctabqb;
+					temptabeditorele->m_tabptr = (wyInt64)m_pctabqb;
 #endif
 				}
 				else
@@ -206,7 +208,7 @@ TabModule::Create(MDIWindow * wnd)
 					//create querybuildertab
 #ifndef COMMUNITY
 					CreateSchemaDesigner(wnd);
-					temptabeditorele->m_tabptr = (wyInt32)m_pctabsd;
+					temptabeditorele->m_tabptr = (wyInt64)m_pctabsd;
 #endif
 				}
 				if(temptabeditorele->m_tabptr != 0)
@@ -1699,6 +1701,25 @@ TabModule::SetBackQuotesOption()
 #endif
 
 	return;
+}
+
+void
+TabModule::Refresh()
+{
+	wyInt32			tabicon = 0;
+
+	tabicon = GetActiveTabImage();
+	if (IDI_CREATETABLE == tabicon || IDI_ALTERTABLE == tabicon)
+	{
+		TableTabInterfaceTabMgmt *tabintmgmt;
+		tabintmgmt = ((TableTabInterface*)GetActiveTabType())->m_ptabintmgmt;
+		tabintmgmt->m_tabindexes->Refresh();
+		tabintmgmt->m_tabfk->Refresh();
+
+		if (tabintmgmt->GetActiveTabImage() == IDI_TABPREVIEW)
+			tabintmgmt->m_tabpreview->GenerateAndSetPreviewContent();
+	}
+
 }
 
 // function to handle Edit menu items for each TabEditor ( CTRL+L, CTL+2, CTRL+3).

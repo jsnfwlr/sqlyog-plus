@@ -31,20 +31,20 @@
 
 extern PGLOBALS		pGlobals;
 
-#define RELATIONERROR L"Could not create relation. The possible causes of error are -\n\n"\
-L"1) The reference table does not have InnoDB/SolidDB/PBXT table handler\n"\
-L"2) No index was found on selected columns. You need to explicitly create index on the selected columns\n"\
-L"3) The selected columns will create incorrect foreign definition\n"\
-L"4) You did not select correct columns\n"\
-L"5) Selected columns were not found in the Reference Table\n"\
-L"6) Constraint name already exists\n"\
+#define RELATIONERROR L"Could not create relation. The possible causes of error are -\n\n" \
+L"1) The reference table does not have InnoDB/SolidDB/PBXT table handler\n" \
+L"2) No index was found on selected columns. You need to explicitly create index on the selected columns\n" \
+L"3) The selected columns will create incorrect foreign definition\n" \
+L"4) You did not select correct columns\n" \
+L"5) Selected columns were not found in the Reference Table\n" \
+L"6) Constraint name already exists\n" \
 L"\nPlease correct the errors."
 
-#define EDITRELERROR _(L"There in no direct way to ALTER a Foreign Key in MySQL.\r\n"\
-L"SQLyog will drop the existing one and create a new one using the existing name for the key.\r\n"\
-L"If necessary preconditions for a Foreign Key (matching data types, appropriate indexes etc.) are not met, the create process will fail. "\
-L"The result will be that existing FK is dropped and no new one is created.\r\n"\
-L"You can avoid this by specifying a new name for the key.\r\n\r\n"\
+#define EDITRELERROR _(L"There in no direct way to ALTER a Foreign Key in MySQL.\r\n" \
+L"SQLyog will drop the existing one and create a new one using the existing name for the key.\r\n" \
+L"If necessary preconditions for a Foreign Key (matching data types, appropriate indexes etc.) are not met, the create process will fail. " \
+L"The result will be that existing FK is dropped and no new one is created.\r\n" \
+L"You can avoid this by specifying a new name for the key.\r\n\r\n" \
 L"Do you want to continue?")
 
 //..Structure Destructor
@@ -315,7 +315,7 @@ void
 TabForeignKeys::OnGVNButtonClick()
 {
     CustomGrid_ApplyChanges(m_hgridfk, wyTrue);
-    wyUInt32 col = CustomGrid_GetCurSelCol(m_hgridfk);
+    wyInt64 col = CustomGrid_GetCurSelCol(m_hgridfk);
 
     switch(col)
     {
@@ -368,6 +368,9 @@ TabForeignKeys::OnGVNEndLabelEdit(WPARAM wParam, LPARAM lParam)
     if(!(row >= 0 && row <= CustomGrid_GetRowCount(m_hgridfk)))
         return;
 
+	//from  .ini file. Refresh always
+	m_backtick = AppendBackQuotes() == wyTrue ? "`" : "";
+
     if(data)
         currentdata.SetAs(data);
 
@@ -415,8 +418,8 @@ TabForeignKeys::OnGVNEndLabelEdit(WPARAM wParam, LPARAM lParam)
                         delete cwrapobj;
                         cwrapobj = NULL;
                     }
-                    CustomGrid_SetItemLongValue(m_hgridfk, row, CHILDCOLUMNS, NULL);
-                    CustomGrid_SetItemLongValue(m_hgridfk, row, PARENTCOLUMNS, NULL);
+                    CustomGrid_SetItemLongValue(m_hgridfk, row, CHILDCOLUMNS, (LPARAM)NULL);
+                    CustomGrid_SetItemLongValue(m_hgridfk, row, PARENTCOLUMNS, (LPARAM)NULL);
                 }
                 else
                 {
@@ -463,8 +466,8 @@ TabForeignKeys::OnGVNEndLabelEdit(WPARAM wParam, LPARAM lParam)
                             }
                         }
 
-                        CustomGrid_SetItemLongValue(m_hgridfk, row, CHILDCOLUMNS, (LONG) cwrapobj->m_newval->m_listsrccols);
-                        CustomGrid_SetItemLongValue(m_hgridfk, row, PARENTCOLUMNS, (LONG) cwrapobj->m_newval->m_listtgtcols);
+                        CustomGrid_SetItemLongValue(m_hgridfk, row, CHILDCOLUMNS, (LPARAM) cwrapobj->m_newval->m_listsrccols);
+                        CustomGrid_SetItemLongValue(m_hgridfk, row, PARENTCOLUMNS, (LPARAM) cwrapobj->m_newval->m_listtgtcols);
                     }
                 }
             }
@@ -493,8 +496,8 @@ TabForeignKeys::OnGVNEndLabelEdit(WPARAM wParam, LPARAM lParam)
                     
                     if(col != ONDELETE && col != ONUPDATE)
                     {
-                        CustomGrid_SetItemLongValue(m_hgridfk, row, CHILDCOLUMNS, (LONG) cwrapobj->m_newval->m_listsrccols);
-                        CustomGrid_SetItemLongValue(m_hgridfk, row, PARENTCOLUMNS, (LONG) cwrapobj->m_newval->m_listtgtcols);
+                        CustomGrid_SetItemLongValue(m_hgridfk, row, CHILDCOLUMNS, (LPARAM) cwrapobj->m_newval->m_listsrccols);
+                        CustomGrid_SetItemLongValue(m_hgridfk, row, PARENTCOLUMNS, (LPARAM) cwrapobj->m_newval->m_listtgtcols);
                     }
                 }
             }
@@ -516,8 +519,8 @@ TabForeignKeys::OnGVNEndLabelEdit(WPARAM wParam, LPARAM lParam)
 
             m_listfkwrappers.Insert(cwrapobj);
 
-            CustomGrid_SetItemLongValue(m_hgridfk, row, CHILDCOLUMNS, (LONG) cwrapobj->m_newval->m_listsrccols);
-            CustomGrid_SetItemLongValue(m_hgridfk, row, PARENTCOLUMNS, (LONG) cwrapobj->m_newval->m_listtgtcols);
+            CustomGrid_SetItemLongValue(m_hgridfk, row, CHILDCOLUMNS, (LPARAM) cwrapobj->m_newval->m_listsrccols);
+            CustomGrid_SetItemLongValue(m_hgridfk, row, PARENTCOLUMNS, (LPARAM) cwrapobj->m_newval->m_listtgtcols);
         }
     }
 
@@ -570,21 +573,21 @@ TabForeignKeys::OnGVNEndLabelEdit(WPARAM wParam, LPARAM lParam)
     {
         if(cwrapobj->m_oldval == cwrapobj->m_newval)
         {
-            CustomGrid_SetItemLongValue(m_hgridfk, row, CHILDCOLUMNS, (LONG) cwrapobj->m_oldval->m_listsrccols);
-            CustomGrid_SetItemLongValue(m_hgridfk, row, PARENTCOLUMNS, (LONG) cwrapobj->m_oldval->m_listtgtcols);
+            CustomGrid_SetItemLongValue(m_hgridfk, row, CHILDCOLUMNS, (LPARAM) cwrapobj->m_oldval->m_listsrccols);
+            CustomGrid_SetItemLongValue(m_hgridfk, row, PARENTCOLUMNS, (LPARAM) cwrapobj->m_oldval->m_listtgtcols);
         }
         else if(cwrapobj->m_newval)
         {
-            CustomGrid_SetItemLongValue(m_hgridfk, row, CHILDCOLUMNS, (LONG) cwrapobj->m_newval->m_listsrccols);
-            CustomGrid_SetItemLongValue(m_hgridfk, row, PARENTCOLUMNS, (LONG) cwrapobj->m_newval->m_listtgtcols);
+            CustomGrid_SetItemLongValue(m_hgridfk, row, CHILDCOLUMNS, (LPARAM) cwrapobj->m_newval->m_listsrccols);
+            CustomGrid_SetItemLongValue(m_hgridfk, row, PARENTCOLUMNS, (LPARAM) cwrapobj->m_newval->m_listtgtcols);
         }
         else
         {
-            CustomGrid_SetItemLongValue(m_hgridfk, row, CHILDCOLUMNS, (LONG) NULL);
-            CustomGrid_SetItemLongValue(m_hgridfk, row, PARENTCOLUMNS, (LONG) NULL);
+            CustomGrid_SetItemLongValue(m_hgridfk, row, CHILDCOLUMNS, (LPARAM) NULL);
+            CustomGrid_SetItemLongValue(m_hgridfk, row, PARENTCOLUMNS, (LPARAM) NULL);
         }
     }
-    CustomGrid_SetRowLongData(m_hgridfk, row, (LONG) cwrapobj);
+    CustomGrid_SetRowLongData(m_hgridfk, row, (LPARAM) cwrapobj);
 }
 
 void
@@ -632,7 +635,7 @@ TabForeignKeys::OnTgtColEndLabelEdit(WPARAM wParam, LPARAM lParam)
 void
 TabForeignKeys::OnSrcColEndLabelEdit(WPARAM wParam, LPARAM lParam)
 {
-    wyUInt32            row, col;
+    LPARAM            row, col;
     FKStructWrapper     *cwrapobj;
     wyChar              *data = (wyChar*)lParam;
     wyString            curdata("");
@@ -655,7 +658,7 @@ TabForeignKeys::OnSrcColEndLabelEdit(WPARAM wParam, LPARAM lParam)
             delete cwrapobj->m_newval->m_listsrccols;
             cwrapobj->m_newval->m_listsrccols = NULL;
         }
-        CustomGrid_SetItemLongValue(m_hgridfk, row, col, NULL);
+        CustomGrid_SetItemLongValue(m_hgridfk, row, col, (LPARAM)NULL);
     }
 }
 
@@ -732,7 +735,7 @@ TabForeignKeys::OnTgtDBSelection(LPARAM lparam)
             cwrapobj->m_newval->m_listtgtcols = NULL;
             
             CustomGrid_SetItemLongValue(m_hgridfk, row, PARENTCOLUMNS, (LPARAM) NULL);
-            CustomGrid_SetRowLongData(m_hgridfk, row, (LONG) cwrapobj);
+            CustomGrid_SetRowLongData(m_hgridfk, row, (LPARAM) cwrapobj);
         }
     }
 }
@@ -749,7 +752,10 @@ TabForeignKeys::OnSrcColsDlgIDOK(HWND hwnd)
     FieldStructWrapper      *fieldwrap = NULL;
     //wyBool                  markasdirty = wyFalse;
     wyString                refcols(""), tmpcolname;
-    
+
+	//from  .ini file
+	m_backtick = AppendBackQuotes() == wyTrue ? "`" : "";
+
     CustomGrid_ApplyChanges(m_hdlggrid);
 
     row = CustomGrid_GetCurSelRow(m_hgridfk);
@@ -826,7 +832,7 @@ TabForeignKeys::OnSrcColsDlgIDOK(HWND hwnd)
         tmpcolname.SetAs(fieldwrap->m_newval->m_name);
         //..Escaping Backtick
         tmpcolname.FindAndReplace("`", "``");
-        refcols.AddSprintf("`%s`, ", tmpcolname.GetString());
+        refcols.AddSprintf("%s%s%s, ", m_backtick, tmpcolname.GetString(), m_backtick);
         listfksrccols->Insert(srccol);
 
         refby = new ReferencedBy(cwrapobj);
@@ -862,9 +868,9 @@ TabForeignKeys::OnSrcColsDlgIDOK(HWND hwnd)
                     cwrapobj = NULL;
                 }
                 
-                CustomGrid_SetRowLongData(m_hgridfk, row, (LONG) cwrapobj);
-                CustomGrid_SetItemLongValue(m_hgridfk, row, CHILDCOLUMNS, NULL);
-                CustomGrid_SetItemLongValue(m_hgridfk, row, PARENTCOLUMNS, NULL);
+                CustomGrid_SetRowLongData(m_hgridfk, row, (LPARAM) cwrapobj);
+                CustomGrid_SetItemLongValue(m_hgridfk, row, CHILDCOLUMNS, (LPARAM)NULL);
+                CustomGrid_SetItemLongValue(m_hgridfk, row, PARENTCOLUMNS, (LPARAM)NULL);
                 CustomGrid_SetText(m_hgridfk, row, col, "");
                 return;
             }
@@ -898,8 +904,8 @@ TabForeignKeys::OnSrcColsDlgIDOK(HWND hwnd)
     //cwrapobj = ManageWrapperForNewAndOldVal(cwrapobj);
     listfksrccols = (cwrapobj && cwrapobj->m_newval) ? cwrapobj->m_newval->m_listsrccols : NULL;
 
-    CustomGrid_SetItemLongValue(m_hgridfk, row, col, (LONG) listfksrccols);
-    CustomGrid_SetItemLongValue(m_hgridfk, row, PARENTCOLUMNS, (LONG) ((cwrapobj && cwrapobj->m_newval) ? cwrapobj->m_newval->m_listtgtcols : NULL));
+    CustomGrid_SetItemLongValue(m_hgridfk, row, col, (LPARAM) listfksrccols);
+    CustomGrid_SetItemLongValue(m_hgridfk, row, PARENTCOLUMNS, (LPARAM) ((cwrapobj && cwrapobj->m_newval) ? cwrapobj->m_newval->m_listtgtcols : NULL));
     CustomGrid_SetRowLongData(m_hgridfk, row, (LPARAM)cwrapobj);
 
     if(refcols.GetLength() && (row == CustomGrid_GetRowCount(m_hgridfk) - 1))
@@ -1048,8 +1054,8 @@ TabForeignKeys::OnButtonUpDown(wyBool   up)
     CustomGrid_SetText(m_hdlggrid, selrow, 0, (wyChar*)colname2.GetString());
     CustomGrid_SetText(m_hdlggrid, selrow, 1, (wyChar*)datatype2.GetString());
 
-    CustomGrid_SetRowLongData(m_hdlggrid, beforerow, (LONG) pvoid1);
-    CustomGrid_SetRowLongData(m_hdlggrid, selrow, (LONG) pvoid2);
+    CustomGrid_SetRowLongData(m_hdlggrid, beforerow, (LPARAM) pvoid1);
+    CustomGrid_SetRowLongData(m_hdlggrid, selrow, (LPARAM) pvoid2);
 
     CustomGrid_EnsureVisible(m_hdlggrid, beforerow, selcol);
     CustomGrid_SetCurSelection(m_hdlggrid, beforerow, selcol, wyTrue);
@@ -1201,7 +1207,7 @@ TabForeignKeys::FetchTgtTblCols(wyInt32 row, wyString& tblnamestr)
     if(cwrapobj && cwrapobj->m_newval && cwrapobj->m_newval != cwrapobj->m_oldval)
         cwrapobj->m_newval->m_listtgtcols = listkeycolumns;
 
-    CustomGrid_SetItemLongValue(m_hgridfk, row, PARENTCOLUMNS, (LONG) listkeycolumns);
+    CustomGrid_SetItemLongValue(m_hgridfk, row, PARENTCOLUMNS, (LPARAM) listkeycolumns);
 
     /// Forming the string of the selected target-columns
     tgtcol = (FKTargetColumn*)listkeycolumns->GetFirst();
@@ -1211,7 +1217,7 @@ TabForeignKeys::FetchTgtTblCols(wyInt32 row, wyString& tblnamestr)
         {
             colnamestr.SetAs(tgtcol->m_name);
             colnamestr.FindAndReplace("`", "``");
-            tgtcolsstr.AddSprintf("`%s`, ", colnamestr.GetString());
+            tgtcolsstr.AddSprintf("%s%s%s, ", m_backtick, colnamestr.GetString(), m_backtick);
         }
         tgtcol = (FKTargetColumn*)tgtcol->m_next;
     }
@@ -1611,6 +1617,9 @@ TabForeignKeys::FetchInitValuesHelper(wyUInt32 row, wyString &fkey)
     RelTableFldInfo	*srcfldinfo = NULL, *tempinfo = NULL, *tgtfldinfo = NULL;
     FKStructWrapper *cwrapobj = NULL;
     StructFK        *value = NULL;
+	
+	//from  .ini file
+	m_backtick = AppendBackQuotes() == wyTrue ? "`" : "";
 
     dbname.SetAs(m_ptabmgmt->m_tabinterfaceptr->m_dbname);
 
@@ -1669,7 +1678,7 @@ TabForeignKeys::FetchInitValuesHelper(wyUInt32 row, wyString &fkey)
             tmpstr.SetAs(srcfldinfo->m_tablefld);
             tmpstr.FindAndReplace("`", "``");
 
-            keyval.AddSprintf("`%s`, ", tmpstr.GetString());
+            keyval.AddSprintf("%s%s%s, ", m_backtick, tmpstr.GetString(), m_backtick);
         }
         tempinfo = srcfldinfo;
         srcfldinfo = (RelTableFldInfo*)fkeyparam->m_fkeyfldlist->Remove(srcfldinfo);
@@ -1732,7 +1741,7 @@ TabForeignKeys::FetchInitValuesHelper(wyUInt32 row, wyString &fkey)
 
                 colnamestr.SetAs(tgtfldinfo->m_tablefld);
                 colnamestr.FindAndReplace("`", "``");
-                keyval.AddSprintf("`%s`, ", colnamestr.GetString());
+                keyval.AddSprintf("%s%s%s, ", m_backtick, colnamestr.GetString(), m_backtick);
 
                 listtgtcols->Insert(tgtcol);
             }
@@ -1758,7 +1767,7 @@ TabForeignKeys::FetchInitValuesHelper(wyUInt32 row, wyString &fkey)
         {
             colnamestr.SetAs(tgtfldinfo->m_tablefld);
             colnamestr.FindAndReplace("`", "``");
-            tmpkeycols.AddSprintf("`%s`, ", colnamestr.GetString());
+            tmpkeycols.AddSprintf("%s%s%s, ", m_backtick, colnamestr.GetString(), m_backtick);
             tgtfldinfo = (RelTableFldInfo*)tgtfldinfo->m_next;
         }
         keyval.SetAs(tmpkeycols);
@@ -1879,10 +1888,10 @@ TabForeignKeys::ProcessFailedWrapper(wyUInt32 row)
     CustomGrid_SetText(m_hgridfk, row, ONUPDATE, cwrapobj->m_newval->m_onupdate.GetString());
     CustomGrid_SetText(m_hgridfk, row, ONDELETE, cwrapobj->m_newval->m_ondelete.GetString());
 
-    CustomGrid_SetItemLongValue(m_hgridfk, row, CHILDCOLUMNS, (LONG) cwrapobj->m_newval->m_listsrccols);
-    CustomGrid_SetItemLongValue(m_hgridfk, row, PARENTCOLUMNS, (LONG) cwrapobj->m_newval->m_listtgtcols);
+    CustomGrid_SetItemLongValue(m_hgridfk, row, CHILDCOLUMNS, (LPARAM) cwrapobj->m_newval->m_listsrccols);
+    CustomGrid_SetItemLongValue(m_hgridfk, row, PARENTCOLUMNS, (LPARAM) cwrapobj->m_newval->m_listtgtcols);
 
-    CustomGrid_SetRowLongData(m_hgridfk, row, (LONG) cwrapobj);
+    CustomGrid_SetRowLongData(m_hgridfk, row, (LPARAM) cwrapobj);
 
     //..Reseting failed fk-wrapper records
     m_failedwrap = NULL;
@@ -2016,7 +2025,7 @@ TabForeignKeys::FillInitValues(List* listunsavedwrappers)
         if(cwrapobj->m_newval)
         {
             InsertWrapperIntoRow(rowind, cwrapobj);
-            CustomGrid_SetRowLongData(m_hgridfk, rowind, (LONG) cwrapobj);
+            CustomGrid_SetRowLongData(m_hgridfk, rowind, (LPARAM) cwrapobj);
         }
         cwrapobj = (FKStructWrapper *)cwrapobj->m_next;
     }
@@ -2035,7 +2044,7 @@ TabForeignKeys::FillInitValues(List* listunsavedwrappers)
 
             rowind = InsertRow();
             InsertWrapperIntoRow(rowind, tmpcwrapobj);
-            CustomGrid_SetRowLongData(m_hgridfk, rowind, (LONG) tmpcwrapobj);
+            CustomGrid_SetRowLongData(m_hgridfk, rowind, (LPARAM) tmpcwrapobj);
             m_listfkwrappers.Insert(tmpcwrapobj);
         }
     }
@@ -2140,8 +2149,8 @@ TabForeignKeys::InsertWrapperIntoRow(wyUInt32 row, FKStructWrapper *cwrapobj)
     CustomGrid_SetText(m_hgridfk, row, ONUPDATE, cwrapobj->m_newval->m_onupdate.GetString());
     CustomGrid_SetText(m_hgridfk, row, ONDELETE, cwrapobj->m_newval->m_ondelete.GetString());
 
-    CustomGrid_SetItemLongValue(m_hgridfk, row, CHILDCOLUMNS, (LONG) cwrapobj->m_newval->m_listsrccols);
-    CustomGrid_SetItemLongValue(m_hgridfk, row, PARENTCOLUMNS, (LONG) cwrapobj->m_newval->m_listtgtcols);
+    CustomGrid_SetItemLongValue(m_hgridfk, row, CHILDCOLUMNS, (LPARAM) cwrapobj->m_newval->m_listsrccols);
+    CustomGrid_SetItemLongValue(m_hgridfk, row, PARENTCOLUMNS, (LPARAM) cwrapobj->m_newval->m_listtgtcols);
 }
 
 wyBool
@@ -2376,7 +2385,7 @@ TabForeignKeys::FillSrcColsDlgGrid(HWND hwnd)
                 CustomGrid_SetText(m_hdlggrid, newrow, 0, (wyChar*)tmpsrccol->m_pcwrapobj->m_newval->m_name.GetString());
                 CustomGrid_SetText(m_hdlggrid, newrow, 1, (wyChar*)tmpsrccol->m_pcwrapobj->m_newval->m_datatype.GetString());
 
-                CustomGrid_SetRowLongData(m_hdlggrid, newrow, (LONG) tmpsrccol->m_pcwrapobj);
+                CustomGrid_SetRowLongData(m_hdlggrid, newrow, (LPARAM) tmpsrccol->m_pcwrapobj);
             }
             tmpsrccol = (FKSourceColumn*) tmpsrccol->m_next;
         }
@@ -2409,7 +2418,7 @@ TabForeignKeys::FillSrcColsDlgGrid(HWND hwnd)
                 newrow = CustomGrid_InsertRow(m_hdlggrid);
                 CustomGrid_SetText(m_hdlggrid, newrow, 0, (wyChar*)cfieldswrapobj->m_newval->m_name.GetString());
                 CustomGrid_SetText(m_hdlggrid, newrow, 1, (wyChar*)cfieldswrapobj->m_newval->m_datatype.GetString());
-                CustomGrid_SetRowLongData(m_hdlggrid, newrow, (LONG) cfieldswrapobj);
+                CustomGrid_SetRowLongData(m_hdlggrid, newrow, (LPARAM) cfieldswrapobj);
 				}
             }
         }
@@ -2589,7 +2598,7 @@ TabForeignKeys::FillTgtColsDlgGrid(HWND hwnd)
 
                 CustomGrid_SetText(m_hdlggrid, newrow, 0, (wyChar*)tmptgtcol->m_name.GetString());
                 CustomGrid_SetText(m_hdlggrid, newrow, 1, (wyChar*)tmptgtcol->m_datatype.GetString());
-                CustomGrid_SetRowLongData(m_hdlggrid, newrow, (LONG) tmptgtcol);
+                CustomGrid_SetRowLongData(m_hdlggrid, newrow, (LPARAM) tmptgtcol);
 
                 tmptgtcol = (FKTargetColumn*) tmptgtcol->m_next;
             }
@@ -2667,7 +2676,7 @@ TabForeignKeys::SrcColsDlgWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM
 
     case WM_HELP:
         {
-            ShowHelp("http://sqlyogkb.webyog.com/article/249-fk-in-mysql-and-sqlyog");
+            ShowHelp("http://sqlyogkb.webyog.com/article/90-fk-in-mysql-and-sqlyog");
         }
         return 1;
 
@@ -2744,7 +2753,7 @@ TabForeignKeys::TgtColsDlgWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM
 
     case WM_HELP:
         {
-            ShowHelp("http://sqlyogkb.webyog.com/article/249-fk-in-mysql-and-sqlyog");
+            ShowHelp("http://sqlyogkb.webyog.com/article/90-fk-in-mysql-and-sqlyog");
         }
         return 1;
 
@@ -2778,7 +2787,7 @@ TabForeignKeys::OnTargetColDlgWMCommand(HWND hwnd, WPARAM wparam, LPARAM lparam)
     {
     case IDOK:
         if(m_hdlggrid)
-        OnTgtColsDlgIDOK(hwnd);
+	        OnTgtColsDlgIDOK(hwnd);
         SendMessage(hwnd, WM_CLOSE, wparam, lparam);
         break;
 
@@ -2788,12 +2797,12 @@ TabForeignKeys::OnTargetColDlgWMCommand(HWND hwnd, WPARAM wparam, LPARAM lparam)
 
     case IDC_MOVEUP:
         if(m_hdlggrid)
-        OnButtonUpDown(wyTrue);
+			OnButtonUpDown(wyTrue);
         break;
 
     case IDC_MOVEDOWN:
         if(m_hdlggrid)
-        OnButtonUpDown(wyFalse);
+			OnButtonUpDown(wyFalse);
         break;
     }
 }
@@ -2807,6 +2816,10 @@ TabForeignKeys::OnTgtColsDlgIDOK(HWND hwnd)
     FKTargetColumn  *tgtcol = NULL, *tmptgtcol = NULL;
     FKStructWrapper *cwrapobj = NULL;
     StructFK    *fk = NULL;
+
+	//from  .ini file
+	m_backtick = AppendBackQuotes() == wyTrue ? "`" : "";
+
     //wyBool      markasdirty = wyFalse;
     nrows = CustomGrid_GetRowCount(m_hdlggrid);
     row = CustomGrid_GetCurSelRow(m_hgridfk);
@@ -2838,7 +2851,7 @@ TabForeignKeys::OnTgtColsDlgIDOK(HWND hwnd)
                 tgtcolnew->m_datatype.SetAs(tgtcol->m_datatype);
                 tgtcolnew->m_selected = tgtcol->m_selected;
                 //newlist->Insert(tgtcolnew);
-                CustomGrid_SetRowLongData(m_hdlggrid, i, (LONG) tgtcolnew);
+                CustomGrid_SetRowLongData(m_hdlggrid, i, (LPARAM) tgtcolnew);
             }
             //cwrapobj->m_newval->m_listtgtcols = newlist;
 
@@ -2891,7 +2904,7 @@ TabForeignKeys::OnTgtColsDlgIDOK(HWND hwnd)
             checkedlist.Insert(tgtcol);
             colnamestr.SetAs(tgtcol->m_name);
             colnamestr.FindAndReplace("`", "``");
-            keydef.AddSprintf("`%s`, ", colnamestr.GetString());
+            keydef.AddSprintf("%s%s%s, ", m_backtick, colnamestr.GetString(), m_backtick);
         }
         else
         {
@@ -2929,9 +2942,9 @@ TabForeignKeys::OnTgtColsDlgIDOK(HWND hwnd)
 
     list = (cwrapobj && cwrapobj->m_newval) ? cwrapobj->m_newval->m_listtgtcols : NULL;
 
-    CustomGrid_SetItemLongValue(m_hgridfk, row, col, (LONG) list);
-    CustomGrid_SetItemLongValue(m_hgridfk, row, CHILDCOLUMNS, (LONG) ((cwrapobj && cwrapobj->m_newval) ? cwrapobj->m_newval->m_listsrccols : NULL));
-    CustomGrid_SetRowLongData(m_hgridfk, row, (LONG) cwrapobj);
+    CustomGrid_SetItemLongValue(m_hgridfk, row, col, (LPARAM) list);
+    CustomGrid_SetItemLongValue(m_hgridfk, row, CHILDCOLUMNS, (LPARAM) ((cwrapobj && cwrapobj->m_newval) ? cwrapobj->m_newval->m_listsrccols : NULL));
+    CustomGrid_SetRowLongData(m_hgridfk, row, (LPARAM) cwrapobj);
     CustomGrid_SetText(m_hgridfk, row, col, (wyChar*) keydef.GetString());
 
     if(keydef.GetLength() && (row == CustomGrid_GetRowCount(m_hgridfk) - 1))
@@ -4284,16 +4297,16 @@ TabForeignKeys::AddFKOnDrag(FKStructWrapper *cwrap, List *temp_listsrccols)
     row = CustomGrid_InsertRowInBetween(m_hgridfk, count-1);
     
     CustomGrid_EnsureVisible(m_hgridfk, row, 1);
-    CustomGrid_SetRowLongData(m_hgridfk, row, (LONG) cwrap);
+    CustomGrid_SetRowLongData(m_hgridfk, row, (LPARAM) cwrap);
 
     CustomGrid_SetText(m_hgridfk, row, CHILDCOLUMNS, strsrccols.GetString());
-    CustomGrid_SetItemLongValue(m_hgridfk, row, CHILDCOLUMNS, (LONG)cwrap->m_newval->m_listsrccols);
+    CustomGrid_SetItemLongValue(m_hgridfk, row, CHILDCOLUMNS, (LPARAM)cwrap->m_newval->m_listsrccols);
     CustomGrid_SetText(m_hgridfk, row, 2, cwrap->m_newval->m_tgtdb.GetString());
     CustomGrid_SetText(m_hgridfk, row, 3, cwrap->m_newval->m_tgttbl.GetString());
     
     CustomGrid_SetCurSelRow(m_hgridfk, row);
     OnTgtTblEndLabelEdit(row, cwrap->m_newval->m_tgttbl);
-    CustomGrid_SetItemLongValue(m_hgridfk, row, 4, (LONG)cwrap->m_newval->m_listtgtcols);
+    CustomGrid_SetItemLongValue(m_hgridfk, row, 4, (LPARAM)cwrap->m_newval->m_listtgtcols);
 
     m_listfkwrappers.Insert(cwrap);
 
@@ -4373,6 +4386,104 @@ TabForeignKeys::ReInitializeGrid(List *unsavedfkwrappers)
     InsertRow();
 }
 
+void
+TabForeignKeys::Refresh()
+{
+	FKStructWrapper *cwrapobj = NULL;
+	wyUInt32    nrows = 0;
+
+	//from  .ini file
+	m_backtick = AppendBackQuotes() == wyTrue ? "`" : "";
+
+	cwrapobj = (FKStructWrapper *)m_listfkwrappers.GetFirst();
+	while (cwrapobj)
+	{
+		if (cwrapobj->m_oldval)
+			Refresh(cwrapobj->m_oldval);
+		if (cwrapobj->m_newval && cwrapobj->m_newval != cwrapobj->m_oldval)
+			Refresh(cwrapobj->m_newval);
+
+		cwrapobj = (FKStructWrapper *)cwrapobj->m_next;
+	}
+
+	nrows = CustomGrid_GetRowCount(m_hgridfk);
+	cwrapobj = NULL;
+
+	for (int row = 0; row<nrows; row++)
+	{
+		cwrapobj = (FKStructWrapper *)CustomGrid_GetRowLongData(m_hgridfk, row);
+
+		if (!cwrapobj)
+			continue;
+
+		if (!cwrapobj->m_newval)
+			continue;
+
+		CustomGrid_SetText(m_hgridfk, row, CHILDCOLUMNS, cwrapobj->m_newval->m_srccols.GetString());
+		CustomGrid_SetText(m_hgridfk, row, PARENTCOLUMNS, cwrapobj->m_newval->m_tgtcols.GetString());
+	}
+}
+
+void
+TabForeignKeys::Refresh(StructFK* fkInfo)
+{
+	FKSourceColumn *srccols = NULL;
+	FKTargetColumn *tgtcols = NULL;
+	wyString        srccolsstr(""), tgtcolsstr("");
+
+	if (fkInfo->m_listsrccols)
+	{
+		srccols = (FKSourceColumn*)fkInfo->m_listsrccols->GetFirst();
+
+		while (srccols)
+		{
+			wyString tmpstr;
+			tmpstr.SetAs(srccols->m_pcwrapobj->m_newval->m_name);
+			tmpstr.FindAndReplace("`", "``");
+
+			srccolsstr.AddSprintf("%s%s%s, ", m_backtick, tmpstr.GetString(), m_backtick);
+
+			srccols = (FKSourceColumn*)srccols->m_next;
+		}
+
+		srccolsstr.RTrim();
+		if (srccolsstr.GetLength())
+		{
+			while (srccolsstr.GetCharAt(srccolsstr.GetLength() - 1) == ',')
+				srccolsstr.Strip(1);
+		}
+
+		fkInfo->m_srccols.SetAs(srccolsstr);
+	}
+
+	if (fkInfo->m_listtgtcols)
+	{
+		tgtcols = (FKTargetColumn *)fkInfo->m_listtgtcols->GetFirst();
+
+		while (tgtcols)
+		{
+			if (tgtcols->m_selected)
+			{
+				wyString tmpstr;
+				tmpstr.SetAs(tgtcols->m_name);
+				tmpstr.FindAndReplace("`", "``");
+
+				tgtcolsstr.AddSprintf("%s%s%s, ", m_backtick, tmpstr.GetString(), m_backtick);
+			}
+
+			tgtcols = (FKTargetColumn *)tgtcols->m_next;
+		}
+
+		tgtcolsstr.RTrim();
+		if (tgtcolsstr.GetLength())
+		{
+			while (tgtcolsstr.GetCharAt(tgtcolsstr.GetLength() - 1) == ',')
+				tgtcolsstr.Strip(1);
+		}
+		fkInfo->m_tgtcols.SetAs(tgtcolsstr);
+	}
+}
+
 wyBool
 TabForeignKeys::GenerateFKDropRecreateQuery(wyString **query, wyUInt32 gridrow)
 {
@@ -4391,6 +4502,9 @@ TabForeignKeys::GenerateFKDropRecreateQuery(wyString **query, wyUInt32 gridrow)
     if(cwrapobj->m_oldval == cwrapobj->m_newval)    //..Unchanged existing fks..
         return wyFalse;
 
+	//from  .ini file
+	m_backtick = AppendBackQuotes() == wyTrue ? "`" : "";
+
     tgtdb.SetAs(cwrapobj->m_newval->m_tgtdb);
     tgtdb.FindAndReplace("`", "``");
 
@@ -4402,18 +4516,23 @@ TabForeignKeys::GenerateFKDropRecreateQuery(wyString **query, wyUInt32 gridrow)
         fkname.SetAs(cwrapobj->m_oldval->m_name);
         fkname.FindAndReplace("`", "``");
 
-        query[0]->Sprintf("drop foreign key `%s`", fkname.GetString());
+        query[0]->Sprintf("drop foreign key %s%s%s", m_backtick, fkname.GetString(), m_backtick);
 
         if(!cwrapobj->m_newval->m_name.GetLength())
         {
-            query[1]->Sprintf("add constraint foreign key (%s) references `%s`.`%s`(%s)", cwrapobj->m_newval->m_srccols.GetString(),
-                                                    tgtdb.GetString(), tgttbl.GetString(), cwrapobj->m_newval->m_tgtcols.GetString());
+            query[1]->Sprintf("add constraint foreign key (%s) references %s%s%s.%s%s%s(%s)", cwrapobj->m_newval->m_srccols.GetString(),
+											m_backtick, tgtdb.GetString(), m_backtick,
+											m_backtick, tgttbl.GetString(), m_backtick,
+											cwrapobj->m_newval->m_tgtcols.GetString());
         }
         else
         {
-            query[1]->Sprintf("add constraint `%s` foreign key (%s) references `%s`.`%s`(%s)", fkname.GetString(),
-                                                    cwrapobj->m_newval->m_srccols.GetString(), 
-                                                    tgtdb.GetString(), tgttbl.GetString(), cwrapobj->m_newval->m_tgtcols.GetString());
+            query[1]->Sprintf("add constraint %s%s%s foreign key (%s) references %s%s%s.%s%s%s(%s)", 
+											m_backtick, fkname.GetString(), m_backtick,
+                                            cwrapobj->m_newval->m_srccols.GetString(), 
+											m_backtick, tgtdb.GetString(), m_backtick,
+											m_backtick, tgttbl.GetString(), m_backtick, 
+											cwrapobj->m_newval->m_tgtcols.GetString());
         }
         if(cwrapobj->m_newval->m_onupdate.GetLength())
             query[1]->AddSprintf(" on update %s", cwrapobj->m_newval->m_onupdate.GetString());
@@ -4432,14 +4551,19 @@ TabForeignKeys::GenerateFKDropRecreateQuery(wyString **query, wyUInt32 gridrow)
 
         if(cwrapobj->m_newval->m_name.GetLength())
         {
-            query[0]->Sprintf("\r\n  add constraint `%s` foreign key (%s) references `%s`.`%s`(%s)", fkname.GetString(),
-                                                        cwrapobj->m_newval->m_srccols.GetString(), tgtdb.GetString(), tgttbl.GetString(),
-                                                        cwrapobj->m_newval->m_tgtcols.GetString());
+            query[0]->Sprintf("\r\n  add constraint %s%s%s foreign key (%s) references %s%s%s.%s%s%s(%s)", 
+									m_backtick, fkname.GetString(), m_backtick,
+                                    cwrapobj->m_newval->m_srccols.GetString(), 
+									m_backtick, tgtdb.GetString(), m_backtick,
+									m_backtick, tgttbl.GetString(), m_backtick,
+                                    cwrapobj->m_newval->m_tgtcols.GetString());
         }
         else
         {
-            query[0]->Sprintf("\r\n  add constraint foreign key (%s) references `%s`.`%s`(%s)", cwrapobj->m_newval->m_srccols.GetString(),
-                                                        tgtdb.GetString(), tgttbl.GetString(), cwrapobj->m_newval->m_tgtcols.GetString());
+            query[0]->Sprintf("\r\n  add constraint foreign key (%s) references %s%s%s.%s%s%s(%s)", cwrapobj->m_newval->m_srccols.GetString(),
+									m_backtick, tgtdb.GetString(), m_backtick,
+									m_backtick, tgttbl.GetString(), m_backtick,
+									cwrapobj->m_newval->m_tgtcols.GetString());
         }
         
         if(cwrapobj->m_newval->m_onupdate.GetLength())
@@ -4456,7 +4580,7 @@ TabForeignKeys::GenerateFKDropRecreateQuery(wyString **query, wyUInt32 gridrow)
         fkname.SetAs(cwrapobj->m_oldval->m_name);
         fkname.FindAndReplace("`", "``");
 
-        query[0]->AddSprintf("\r\n  drop foreign key `%s`", fkname.GetString());
+        query[0]->AddSprintf("\r\n  drop foreign key %s%s%s", m_backtick, fkname.GetString(), m_backtick );
     }
 
     return wyTrue;
@@ -4515,6 +4639,9 @@ TabForeignKeys::GenerateNewAndDroppedFKQuery(wyString   &query)
     wyString    dropquery(""), addquery("");
     wyString    tmpstr(""), tgtdb, tgttbl;
 
+	//from  .ini file
+	m_backtick = AppendBackQuotes() == wyTrue ? "`" : "";
+
     for( ; cwrapobj; cwrapobj = (FKStructWrapper *)cwrapobj->m_next)
     {
         //..If existing fk is dropped from the grid
@@ -4522,7 +4649,7 @@ TabForeignKeys::GenerateNewAndDroppedFKQuery(wyString   &query)
         {
             tmpstr.SetAs(cwrapobj->m_oldval->m_name);
             tmpstr.FindAndReplace("`", "``");
-            dropquery.AddSprintf("\r\n  drop foreign key `%s`,", tmpstr.GetString());
+            dropquery.AddSprintf("\r\n  drop foreign key %s%s%s,", m_backtick, tmpstr.GetString(), m_backtick);
         }
         //..If added a new fk
         else if(!cwrapobj->m_oldval && cwrapobj->m_newval)
@@ -4542,17 +4669,18 @@ TabForeignKeys::GenerateNewAndDroppedFKQuery(wyString   &query)
             tgttbl.FindAndReplace("`", "``");
 
             if(cwrapobj->m_newval->m_name.GetLength())
-                addquery.AddSprintf("constraint `%s` foreign key (%s) references `%s`.`%s`(%s)", tmpstr.GetString(),
-                                                                cwrapobj->m_newval->m_srccols.GetString(),
-                                                                tgtdb.GetString(),
-                                                                tgttbl.GetString(),
-                                                                cwrapobj->m_newval->m_tgtcols.GetString());
+                addquery.AddSprintf("constraint %s%s%s foreign key (%s) references %s%s%s.%s%s%s(%s)", 
+									m_backtick, tmpstr.GetString(), m_backtick,
+                                    cwrapobj->m_newval->m_srccols.GetString(),
+									m_backtick, tgtdb.GetString(), m_backtick,
+									m_backtick, tgttbl.GetString(), m_backtick,
+                                    cwrapobj->m_newval->m_tgtcols.GetString());
 
             else
-                addquery.AddSprintf("foreign key (%s) references `%s`.`%s`(%s)", cwrapobj->m_newval->m_srccols.GetString(),
-                                                                tgtdb.GetString(),
-                                                                tgttbl.GetString(),
-                                                                cwrapobj->m_newval->m_tgtcols.GetString());
+                addquery.AddSprintf("foreign key (%s) references %s%s%s.%s%s%s(%s)", cwrapobj->m_newval->m_srccols.GetString(),
+									m_backtick, tgtdb.GetString(), m_backtick,
+									m_backtick, tgttbl.GetString(), m_backtick,
+                                    cwrapobj->m_newval->m_tgtcols.GetString());
 
             if(cwrapobj->m_newval->m_onupdate.GetLength())
                 addquery.AddSprintf(" on update %s", cwrapobj->m_newval->m_onupdate.GetString());

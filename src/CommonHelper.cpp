@@ -3150,7 +3150,7 @@ void
 GetColLength(MYSQL_ROW row, wyInt32 numcols, wyInt32 col, wyUInt32 *len)
 {
 	MYSQL_ROW   column = row;
-	wyUInt32    lengtharray[3400];
+	wyUInt32    lengtharray[4096];// changed the max allowed number of column per table from 3400 to 4096
 	wyUInt32    *arr = NULL, *plen = 0;
 
 #ifdef _WIN32
@@ -3482,7 +3482,7 @@ OnExitSSHConnection(PIPEHANDLES *sshpipehanles)
 	char *buffer = "exit\n";
 
 	//Executing the exit command to solve issue reporte at tickt #7953(Not stopping BASH.exe when terminating plink)
-	VERIFY(WriteFile(sshpipehanles->m_hwritepipe2, buffer, 5, &lpbytes, NULL));
+	WriteFile(sshpipehanles->m_hwritepipe2, buffer, 5, &lpbytes, NULL);
 	
 	Sleep(200);
 	
@@ -3819,13 +3819,13 @@ SetMySQLOptions(ConnectionInfo *conn, Tunnel *tunnel, PMYSQL pmysql, wyBool isse
 
 
 	//Session wait_timeout
-	timeout = conn->m_strwaittimeout.GetAsUInt32();
-
-	if(timeout > 28800 || timeout <= 0)
-		conn->m_strwaittimeout.SetAs("28800");
-	
-	strtimeout.Sprintf("/*!40101 set @@session.wait_timeout=%s */", conn->m_strwaittimeout.GetString());
-	mysql_options(*pmysql, MYSQL_INIT_COMMAND, strtimeout.GetString());
+	if(conn->m_isdeftimeout != wyTrue){
+		timeout = conn->m_strwaittimeout.GetAsUInt32();
+		if(timeout > 28800 || timeout <= 0)
+			conn->m_strwaittimeout.SetAs("28800");
+		strtimeout.Sprintf("/*!40101 set @@session.wait_timeout=%s */", conn->m_strwaittimeout.GetString());
+		mysql_options(*pmysql, MYSQL_INIT_COMMAND, strtimeout.GetString());
+	}
 }
 
 //Gets the field inforamtion of the view
@@ -4090,7 +4090,7 @@ InitConnectionDetails(ConnectionInfo *conn)
     conn->m_issslauthchecked    = wyFalse;
     conn->m_issslchecked        = wyFalse;
 	conn->m_iscompress			= wyTrue;	
-	conn->m_isdeftimeout			= wyTrue;
+	conn->m_isdeftimeout		= wyTrue;
 	conn->m_strwaittimeout.SetAs("28800"); 
 	conn->m_isreadonly			= wyFalse;
 	//conn->m_ispwdcleartext		= wyFalse;

@@ -2,8 +2,6 @@
 
 <resources>
 
-	<string name="100">Connection</string>
-
 	<string name="101">Create A New Connection</string>
 
 	<string name="102">Create A New Connection With Current Connection Properties</string>
@@ -193,6 +191,8 @@
 	<string name="206">Revert selected changes</string>
 	
 	<string name="207">Rename Query Editor</string>
+
+	<string name="208">Collapse All in Object Browser</string>
 
 </resources>
 

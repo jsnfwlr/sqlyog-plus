@@ -592,7 +592,8 @@ MDIWindow::WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
         break;
 
     case WM_NCDESTROY:
-		delete pcquerywnd;
+		if(pcquerywnd)
+			delete pcquerywnd;
 		break;
 
 	case WM_NOTIFY:
@@ -625,7 +626,7 @@ MDIWindow::WndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 		break;
 
 	case WM_HELP:
-		ShowHelp("http://sqlyogkb.webyog.com/article/151-getting-started");
+		ShowHelp("http://sqlyogkb.webyog.com/category/22-getting-started");
 		break;
 
 	case UM_TAGFILE_UPDATE_START:
@@ -3218,16 +3219,7 @@ wyInt32
 MDIWindow::ShowFlushDlg()
 {
 	wyInt32		ret;
-	//EditorBase	*peditorbase;
 
-	//Post 8.01
-	/*if(GetActiveTabEditor() != NULL)
-    {
-        peditorbase    = GetActiveTabEditor()->m_peditorbase;
-	
-		//InvalidateRect(peditorbase->m_hwnd, NULL, FALSE);
-		//UpdateWindow(peditorbase->m_hwnd);
-    }*/
 	ret = DialogBoxParam(pGlobals->m_hinstance, MAKEINTRESOURCE(IDD_FLUSH), m_hwnd, 
 							MDIWindow::FlushWndProc,(LPARAM)this);
 
@@ -3257,7 +3249,7 @@ MDIWindow::FlushWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 		break;
 
 	case WM_HELP:
-		ShowHelp("http://sqlyogkb.webyog.com/article/333-flush");
+		ShowHelp("http://sqlyogkb.webyog.com/article/133-flush");
 		return wyTrue;	
 
 	case WM_DESTROY:
@@ -3614,7 +3606,7 @@ wyBool
 MDIWindow::ShowTemplateDlg()
 {
 	Listinfo    *listret;
-	wyInt32     ret;
+	wyInt64     ret;
     TabTypes	*ptabeditor  = NULL; 
 	EditorBase	*peditorbase = NULL;
 	wyWChar		buff[SIZE_1024] = {0};
@@ -3743,7 +3735,7 @@ MDIWindow::TemplateWndProc(HWND hwnd, UINT pMessage, WPARAM wparam, LPARAM lpara
 			break;
 
 		case WM_HELP:
-			ShowHelp("http://sqlyogkb.webyog.com/article/181-sql-templates");
+			ShowHelp("http://sqlyogkb.webyog.com/article/53-sql-templates");
 			return wyTrue;
 
 		case WM_DESTROY:
@@ -3852,7 +3844,7 @@ MDIWindow::InitListBox(HWND hwndlist, HWND hwndEdit)
 		{ IDM_EDIT_TEMP_DROPEVENT,      L"Drop Event", 0}
 	};
 	wyInt32 size = sizeof(tmpvalue)/ sizeof(tmpvalue[0]);
-	wyInt32 templatecount, ret;
+	wyInt64 templatecount, ret;
 
 	for(templatecount = 0; templatecount < size; templatecount++)
 	{
@@ -3899,10 +3891,10 @@ MDIWindow::InitTempDlg(HWND hwnd)
 wyBool
 MDIWindow::ShowTmpPreview(HWND hwndlist, HWND hwndedit)
 {
-	wyInt32		ret;
+	wyInt64		ret;
     wyWChar	    preview[SIZE_1024] = {0};
 	Listinfo    *pitemdata;
-	wyInt32     itemdata;
+	LPARAM     itemdata;
 
 	VERIFY ((ret = SendMessage(hwndlist, LB_GETCURSEL, 0, 0))!= LB_ERR);
 
@@ -3920,9 +3912,9 @@ MDIWindow::ShowTmpPreview(HWND hwndlist, HWND hwndedit)
 wyBool
 MDIWindow::FreeList(HWND hwndlist)
 {
-	wyInt32     ret;
+	wyInt64     ret;
 	Listinfo    *pitemdata;
-	wyInt32     itemdata;
+	wyInt64     itemdata;
 
 	VERIFY((ret = SendMessage(hwndlist, LB_GETCURSEL, 0, 0))!= LB_ERR);
 	
@@ -3941,8 +3933,8 @@ wyBool
 MDIWindow::CloseTmpDlg(HWND hwndlist, HWND hwnddlg)
 {
 
-	wyInt32	    ret, sel;
-	wyInt32     itemdata;
+	wyInt64	    ret, sel;
+	wyInt64     itemdata;
 	Listinfo    *pitemdata;
 
 	ret = SendMessage(hwndlist, LB_GETCURSEL, 0, 0);
@@ -3959,7 +3951,7 @@ MDIWindow::CloseTmpDlg(HWND hwndlist, HWND hwnddlg)
 	{
 		itemdata    = SendMessage(hwndlist, LB_GETITEMDATA, ret, 0);
 		pitemdata   = (Listinfo *)itemdata;
-		VERIFY (yog_enddialog(hwnddlg,(wyInt32)pitemdata));
+		VERIFY (yog_enddialog(hwnddlg,(wyInt64)pitemdata));
 		return wyTrue;
 	}
 	else
@@ -5125,6 +5117,8 @@ MDIWindow::HandleQueryExecFinished(HWND hwndactive, MDIWindow *pcquerywnd, WPARA
 		peditorbase->HandleQueryExecFinish(&pcquerywnd->m_stopquery, wparam);
 		pGlobals->m_pcmainwin->OnQueryExecFinish(pcquerywnd);
 		SendMessage(pctabeditor->m_pctabmgmt->m_hwnd, WM_SETREDRAW, TRUE, 0);
+		if(GetForegroundWindow() != pGlobals->m_pcmainwin->m_hwndmain || IsIconic(pGlobals->m_pcmainwin->m_hwndmain) != 0 )
+			FlashWindow(pGlobals->m_pcmainwin->m_hwndmain, TRUE);
 	}
     return;
 }

@@ -2,8 +2,6 @@
 
 <resources>
 
-	<string name="100">接続</string>
-
 	<string name="101">新しい接続を作成</string>
 
 	<string name="102">現在の接続のプロパティで新しい接続を作成</string>
@@ -193,5 +191,7 @@
 	<string name="206">選択した変更を取り消す</string>
 	
 	<string name="207">クエリエディタをリネームする</string>
+
+	<string name="208">オブジェクトブラウザですべて折りたたむ</string>
 
 </resources>

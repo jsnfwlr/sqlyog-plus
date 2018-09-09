@@ -155,6 +155,9 @@ TabIndexes::Create()
     //..Initializing grid
     InitGrid();
 
+	//from  .ini file
+	m_backtick = AppendBackQuotes() == wyTrue ? "`" : "";
+
     if(m_ptabmgmt->m_tabinterfaceptr->m_isaltertable)
     {
         //..Fetching index values
@@ -223,7 +226,7 @@ TabIndexes::FetchIndexValuesIntoWrapper()
             tmpstr.SetAs(colstr);
 
             tmpstr.FindAndReplace("`", "``");
-            indcolsstr.AddSprintf("`%s`", tmpstr.GetString());
+            indcolsstr.AddSprintf("%s%s%s", m_backtick, tmpstr.GetString(), m_backtick);
             
             fieldswrap = m_ptabmgmt->m_tabfields->GetWrapperObjectPointer(colstr);
             if(!fieldswrap)     //..If fieldwrapper not found, then return false
@@ -280,7 +283,7 @@ TabIndexes::FetchIndexValuesIntoWrapper()
                     listindcols = new List();
                 listindcols->Insert(indcols);
                 
-                indcolsstr.AddSprintf("`%s`", colstr.GetString());
+                indcolsstr.AddSprintf("%s%s%s", m_backtick, colstr.GetString(), m_backtick);
                 if(indexlength.GetLength())
                     indcolsstr.AddSprintf("(%s)", indexlength.GetString());
 
@@ -364,7 +367,7 @@ TabIndexes::FetchIndexValuesIntoWrapper()
                 tmpstr.SetAs(colstr);
                 tmpstr.FindAndReplace("`", "``");
 
-                indcolsstr.AddSprintf("`%s`", tmpstr.GetString());
+                indcolsstr.AddSprintf("%s%s%s", m_backtick, tmpstr.GetString(), m_backtick);
 				
                 if(indexlength.GetLength())
                     indcolsstr.AddSprintf("(%s)", indexlength.GetString());
@@ -573,9 +576,9 @@ TabIndexes::GridWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     case GVN_HELP:
         {
             if(ptabind->m_ptabmgmt->m_tabinterfaceptr->m_isaltertable)
-                ShowHelp("http://sqlyogkb.webyog.com/article/246-alter-index");
+                ShowHelp("http://sqlyogkb.webyog.com/article/92-alter-index");
             else
-                ShowHelp("http://sqlyogkb.webyog.com/article/245-create-index");
+                ShowHelp("http://sqlyogkb.webyog.com/article/91-create-index");
         }
     }
     return 1;
@@ -1022,7 +1025,7 @@ TabIndexes::OnEndEditIndexType(WPARAM wParam, LPARAM lParam)
                     cwrapobj->m_newval->m_listcolumns = new List();
                     
                     //..Attaching cwrapobj to the gridrow
-                    CustomGrid_SetRowLongData(m_hgridindexes, row, (LONG) cwrapobj);
+                    CustomGrid_SetRowLongData(m_hgridindexes, row, (LPARAM) cwrapobj);
                 }
                 //..Checking whether the attached index-wrapper is an existing one or a new one
                 else if(cwrapobj->m_oldval)
@@ -1053,8 +1056,8 @@ TabIndexes::OnEndEditIndexType(WPARAM wParam, LPARAM lParam)
                         delete cwrapobj;
                         cwrapobj = deletedpkwrap;
                         
-                        CustomGrid_SetRowLongData(m_hgridindexes, row, (LONG) cwrapobj);
-                        CustomGrid_SetItemLongValue(m_hgridindexes, row, INDEXCOLUMNS, (LONG) ((cwrapobj && cwrapobj->m_newval) ? cwrapobj->m_newval->m_listcolumns : NULL));
+                        CustomGrid_SetRowLongData(m_hgridindexes, row, (LPARAM) cwrapobj);
+                        CustomGrid_SetItemLongValue(m_hgridindexes, row, INDEXCOLUMNS, (LPARAM) ((cwrapobj && cwrapobj->m_newval) ? cwrapobj->m_newval->m_listcolumns : NULL));
                         
                     }
                 }
@@ -1133,15 +1136,15 @@ TabIndexes::OnEndEditIndexType(WPARAM wParam, LPARAM lParam)
         }
     }
 
-    CustomGrid_SetRowLongData(m_hgridindexes, row, (LONG) cwrapobj);
+    CustomGrid_SetRowLongData(m_hgridindexes, row, (LPARAM) cwrapobj);
 
     if(cwrapobj && cwrapobj->m_newval)
         SetValueToStructure(row, col, data);
 
     ScanEntireRow(row, col, currentdata);
 
-    CustomGrid_SetRowLongData(m_hgridindexes, row, (LONG) cwrapobj);
-    CustomGrid_SetItemLongValue(m_hgridindexes, row, INDEXCOLUMNS, (LONG) ((cwrapobj && cwrapobj->m_newval) ? cwrapobj->m_newval->m_listcolumns : NULL));
+    CustomGrid_SetRowLongData(m_hgridindexes, row, (LPARAM) cwrapobj);
+    CustomGrid_SetItemLongValue(m_hgridindexes, row, INDEXCOLUMNS, (LPARAM) ((cwrapobj && cwrapobj->m_newval) ? cwrapobj->m_newval->m_listcolumns : NULL));
     return wyTrue;
 }
 
@@ -1203,8 +1206,8 @@ TabIndexes::OnEndEditIndexColumns(WPARAM wParam, LPARAM lParam)
             delete cwrapobj;
             cwrapobj = NULL;
         }
-        CustomGrid_SetRowLongData(m_hgridindexes, row, (LONG) cwrapobj);
-        CustomGrid_SetItemLongValue(m_hgridindexes, row, INDEXCOLUMNS, NULL);
+        CustomGrid_SetRowLongData(m_hgridindexes, row, (LPARAM) cwrapobj);
+        CustomGrid_SetItemLongValue(m_hgridindexes, row, INDEXCOLUMNS, (LPARAM)NULL);
     }
     else
     {
@@ -1238,7 +1241,7 @@ TabIndexes::OnEndEditIndexColumns(WPARAM wParam, LPARAM lParam)
         }
         cwrapobj->m_newval->m_colsstr.SetAs(currentdata);
         cwrapobj->m_newval->m_listcolumns = listindcols;
-        CustomGrid_SetItemLongValue(m_hgridindexes, row, INDEXCOLUMNS, (LONG)listindcols);
+        CustomGrid_SetItemLongValue(m_hgridindexes, row, INDEXCOLUMNS, (LPARAM)listindcols);
     }
 
     return wyTrue;
@@ -1313,7 +1316,7 @@ TabIndexes::OnEndEditIndexName(WPARAM wParam, LPARAM lParam)
                     if(cwrapobj->m_newval == cwrapobj->m_oldval)
                     {
                         cwrapobj->m_newval = GetDuplicateIndexesStruct(cwrapobj->m_oldval);
-                        CustomGrid_SetItemLongValue(m_hgridindexes, row, INDEXCOLUMNS, (LONG)cwrapobj->m_newval->m_listcolumns);
+                        CustomGrid_SetItemLongValue(m_hgridindexes, row, INDEXCOLUMNS, (LPARAM)cwrapobj->m_newval->m_listcolumns);
                     }
                 }
             }
@@ -1328,7 +1331,7 @@ TabIndexes::OnEndEditIndexName(WPARAM wParam, LPARAM lParam)
                 if(cwrapobj->m_newval == cwrapobj->m_oldval)
                 {
                     cwrapobj->m_newval = GetDuplicateIndexesStruct(cwrapobj->m_oldval);
-                    CustomGrid_SetItemLongValue(m_hgridindexes, row, INDEXCOLUMNS, (LONG)cwrapobj->m_newval->m_listcolumns);
+                    CustomGrid_SetItemLongValue(m_hgridindexes, row, INDEXCOLUMNS, (LPARAM)cwrapobj->m_newval->m_listcolumns);
                 }
             }
             //.. If for existing index, user has deleted all values from the grid row
@@ -1343,10 +1346,10 @@ TabIndexes::OnEndEditIndexName(WPARAM wParam, LPARAM lParam)
             }
         }
     }
-    CustomGrid_SetRowLongData(m_hgridindexes, row, (LONG) cwrapobj);
-    CustomGrid_SetItemLongValue(m_hgridindexes, row, col, (LONG) (cwrapobj && cwrapobj->m_newval ? cwrapobj->m_newval->m_listcolumns : NULL));
+    CustomGrid_SetRowLongData(m_hgridindexes, row, (LPARAM) cwrapobj);
+    CustomGrid_SetItemLongValue(m_hgridindexes, row, col, (LPARAM) (cwrapobj && cwrapobj->m_newval ? cwrapobj->m_newval->m_listcolumns : NULL));
     
-    //CustomGrid_SetItemLongValue(m_hgridindexes, row, INDEXCOLUMNS, (LONG)((cwrapobj && cwrapobj->m_newval) ? cwrapobj->m_newval->m_listcolumns : NULL));
+    //CustomGrid_SetItemLongValue(m_hgridindexes, row, INDEXCOLUMNS, (LPARAM)((cwrapobj && cwrapobj->m_newval) ? cwrapobj->m_newval->m_listcolumns : NULL));
     if(cwrapobj && cwrapobj->m_newval)
         cwrapobj->m_newval->m_name.SetAs(currentdata);
 
@@ -1427,7 +1430,7 @@ wyBool
                     if(cwrapobj->m_newval == cwrapobj->m_oldval)
                     {
                         cwrapobj->m_newval = GetDuplicateIndexesStruct(cwrapobj->m_oldval);
-                        CustomGrid_SetItemLongValue(m_hgridindexes, row, INDEXCOLUMNS, (LONG)cwrapobj->m_newval->m_listcolumns);
+                        CustomGrid_SetItemLongValue(m_hgridindexes, row, INDEXCOLUMNS, (LPARAM)cwrapobj->m_newval->m_listcolumns);
                     }
                 }
             }
@@ -1442,13 +1445,13 @@ wyBool
                 if(cwrapobj->m_newval == cwrapobj->m_oldval)
                 {
                     cwrapobj->m_newval = GetDuplicateIndexesStruct(cwrapobj->m_oldval);
-                    CustomGrid_SetItemLongValue(m_hgridindexes, row, INDEXCOLUMNS, (LONG)cwrapobj->m_newval->m_listcolumns);
+                    CustomGrid_SetItemLongValue(m_hgridindexes, row, INDEXCOLUMNS, (LPARAM)cwrapobj->m_newval->m_listcolumns);
                 }
             }
         }
     }
-    CustomGrid_SetRowLongData(m_hgridindexes, row, (LONG) cwrapobj);
-    CustomGrid_SetItemLongValue(m_hgridindexes, row, col, (LONG) (cwrapobj && cwrapobj->m_newval ? cwrapobj->m_newval->m_listcolumns : NULL));
+    CustomGrid_SetRowLongData(m_hgridindexes, row, (LPARAM) cwrapobj);
+    CustomGrid_SetItemLongValue(m_hgridindexes, row, col, (LPARAM) (cwrapobj && cwrapobj->m_newval ? cwrapobj->m_newval->m_listcolumns : NULL));
     
     if(cwrapobj && cwrapobj->m_newval)
 		cwrapobj->m_newval->m_indexcomment.SetAs(currentdata);
@@ -1595,7 +1598,7 @@ TabIndexes::FillColumnsGrid(HWND hwnd)
                     tempstr.Clear();
                 CustomGrid_SetText(m_hdlggrid, newrow, 2, (wyChar*)tempstr.GetString());
 
-                CustomGrid_SetRowLongData(m_hdlggrid, newrow, (LONG) tmpindcols->m_pcwrapobj);
+                CustomGrid_SetRowLongData(m_hdlggrid, newrow, (LPARAM) tmpindcols->m_pcwrapobj);
             }
             tmpindcols = (IndexColumn*)tmpindcols->m_next;
         }
@@ -1625,7 +1628,7 @@ TabIndexes::FillColumnsGrid(HWND hwnd)
 				  newrow = CustomGrid_InsertRow(m_hdlggrid);
                 CustomGrid_SetText(m_hdlggrid, newrow, 0, (wyChar*)cfieldswrapobj->m_newval->m_name.GetString());
                 CustomGrid_SetText(m_hdlggrid, newrow, 1, (wyChar*)cfieldswrapobj->m_newval->m_datatype.GetString());
-                CustomGrid_SetRowLongData(m_hdlggrid, newrow, (LONG) cfieldswrapobj);
+                CustomGrid_SetRowLongData(m_hdlggrid, newrow, (LPARAM) cfieldswrapobj);
 				}
             }
         }
@@ -1795,7 +1798,7 @@ TabIndexes::OnButtonUpDown(HWND hwnd, wyBool up)
     CustomGrid_SetText(m_hdlggrid, otherrow, 0, (wyChar*)colname1.GetString());
     CustomGrid_SetText(m_hdlggrid, otherrow, 1, (wyChar*)datatype1.GetString());
     CustomGrid_SetText(m_hdlggrid, otherrow, 2, (wyChar*)length1.GetString());
-    CustomGrid_SetRowLongData(m_hdlggrid, otherrow, (LONG) pvoid1);
+    CustomGrid_SetRowLongData(m_hdlggrid, otherrow, (LPARAM) pvoid1);
     CustomGrid_EnsureVisible(m_hdlggrid, otherrow, selcol);
     CustomGrid_SetCurSelection(m_hdlggrid, otherrow, selcol, wyTrue);
     
@@ -1804,7 +1807,7 @@ TabIndexes::OnButtonUpDown(HWND hwnd, wyBool up)
     CustomGrid_SetText(m_hdlggrid, selrow, 0, (wyChar*)colname2.GetString());
     CustomGrid_SetText(m_hdlggrid, selrow, 1, (wyChar*)datatype2.GetString());
     CustomGrid_SetText(m_hdlggrid, selrow, 2, (wyChar*)length2.GetString());
-    CustomGrid_SetRowLongData(m_hdlggrid, selrow, (LONG) pvoid2);
+    CustomGrid_SetRowLongData(m_hdlggrid, selrow, (LPARAM) pvoid2);
     
     if(otherrow == 0)
     {
@@ -1943,6 +1946,79 @@ TabIndexes::ResizeColumnsDialog(HWND hwnd, LPARAM lParam)
 	PositionCtrls(hwnd);
 }
 
+void
+TabIndexes::Refresh()
+{
+	IndexesStructWrapper   *cwrapobj = NULL;
+	wyUInt32    nrows = 0;
+
+	//from  .ini file
+	m_backtick = AppendBackQuotes() == wyTrue ? "`" : "";
+
+	cwrapobj = (IndexesStructWrapper *)m_listwrapperstruct.GetFirst();
+	while (cwrapobj)
+	{
+		if (cwrapobj->m_oldval)
+			Refresh(cwrapobj->m_oldval);
+		if (cwrapobj->m_newval && cwrapobj->m_newval != cwrapobj->m_oldval)
+			Refresh(cwrapobj->m_newval);
+
+		cwrapobj = (IndexesStructWrapper *)cwrapobj->m_next;
+	}
+
+	nrows = CustomGrid_GetRowCount(m_hgridindexes);
+	cwrapobj = NULL;
+
+	for (int row = 0; row<nrows; row++)
+	{
+		cwrapobj = (IndexesStructWrapper *)CustomGrid_GetRowLongData(m_hgridindexes, row);
+
+		if (!cwrapobj)
+			continue;
+
+		if (!cwrapobj->m_newval)
+			continue;
+
+		CustomGrid_SetText(m_hgridindexes, row, INDEXCOLUMNS, cwrapobj->m_newval->m_colsstr.GetString());
+	}
+}
+
+void
+TabIndexes::Refresh(IndexInfo *indexInfo)
+{
+	IndexColumn *indcol = NULL;
+	wyString    indcolsstr("");
+	wyString    tmpstr;
+
+	if (NULL == indexInfo->m_listcolumns)
+		return;
+
+	indcol = (IndexColumn*)indexInfo->m_listcolumns->GetFirst();
+
+	while (indcol)
+	{
+		tmpstr.SetAs(indcol->m_pcwrapobj->m_newval->m_name);
+		tmpstr.FindAndReplace("`", "``");
+
+		indcolsstr.AddSprintf("%s%s%s", m_backtick, tmpstr.GetString(), m_backtick);
+		if (indcol->m_lenth != -1)
+			indcolsstr.AddSprintf("(%d)", indcol->m_lenth);
+
+		indcolsstr.Add(", ");
+
+		indcol = (IndexColumn*)indcol->m_next;
+	}
+
+	indcolsstr.RTrim();
+	if (indcolsstr.GetLength())
+	{
+		if (indcolsstr.GetCharAt(indcolsstr.GetLength() - 1) == ',')
+			indcolsstr.Strip(1);
+	}
+
+	indexInfo->m_colsstr.SetAs(indcolsstr);
+}
+
 INT_PTR CALLBACK
 TabIndexes::ColDlgWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
@@ -1988,9 +2064,9 @@ TabIndexes::ColDlgWndProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
     case WM_HELP:
         {
             if(ptabind->m_ptabmgmt->m_tabinterfaceptr->m_isaltertable)
-                ShowHelp("http://sqlyogkb.webyog.com/article/246-alter-index");
+                ShowHelp("http://sqlyogkb.webyog.com/article/92-alter-index");
             else
-                   ShowHelp("http://sqlyogkb.webyog.com/article/245-create-index");
+                   ShowHelp("http://sqlyogkb.webyog.com/article/91-create-index");
         }
         return 1;
 
@@ -2363,7 +2439,9 @@ TabIndexes::GenerateCreateQuery(wyString &query)
         else
         {
             if(indexnamestr.GetLength())
-                indexstr.AddSprintf("\r\n  %s `%s` (%s)", indextypestr.GetString(), indexnamestr.GetString(), columnsstr.GetString());
+                indexstr.AddSprintf("\r\n  %s %s%s%s (%s)", indextypestr.GetString(),
+					m_backtick, indexnamestr.GetString(), m_backtick,
+					columnsstr.GetString());
             else
                 indexstr.AddSprintf("\r\n  %s (%s)", indextypestr.GetString(), columnsstr.GetString());
         }
@@ -2423,7 +2501,7 @@ TabIndexes::GetDroppedIndexes(wyString& query)
             if(pwrapobj->m_oldval->m_name.CompareI("PRIMARY") == 0)
                 localquerystr.Add("\r\n  drop primary key,");
             else
-                localquerystr.AddSprintf("\r\n  drop index `%s`,", temp.GetString());
+                localquerystr.AddSprintf("\r\n  drop index %s%s%s,", m_backtick, temp.GetString(), m_backtick);
         }
         pwrapobj = (IndexesStructWrapper *)pwrapobj->m_next;
     }
@@ -2466,7 +2544,7 @@ TabIndexes::GetNewAndModifiedIndexes(wyString &query, wyBool  execute)
         {
             indexnamestr.SetAs(pwrapobj->m_oldval->m_name);
             indexnamestr.FindAndReplace("`", "``");
-            tempstr.AddSprintf("\r\n  drop index `%s`,", indexnamestr.GetString());
+            tempstr.AddSprintf("\r\n  drop index %s%s%s,", m_backtick, indexnamestr.GetString(), m_backtick);
         }
 
         GetGridCellData(m_hgridindexes, row, INDEXNAME, indexnamestr);
@@ -2496,7 +2574,9 @@ TabIndexes::GetNewAndModifiedIndexes(wyString &query, wyBool  execute)
         {
             indexnamestr.FindAndReplace("`", "``");
 			if(indexnamestr.GetLength())
-                tempstr.AddSprintf("\r\n  add  %s `%s` (%s)", indextypestr.GetString(), indexnamestr.GetString(), columnsstr.GetString());
+                tempstr.AddSprintf("\r\n  add  %s %s%s%s (%s)", indextypestr.GetString(), 
+					m_backtick, indexnamestr.GetString(), m_backtick,
+					columnsstr.GetString());
             else
                 tempstr.AddSprintf("\r\n  add %s (%s)", indextypestr.GetString(), columnsstr.GetString());
 			if(m_ismysql553 && indexcomment.GetLength())
@@ -2535,6 +2615,9 @@ TabIndexes::OnIDOK(HWND hwnd)
     wyBool                  markasdirty = wyFalse;
     wyString                refcols(""), indexlenstr("");
     FieldStructWrapper      *fieldwrap = NULL;
+
+	//from  .ini file
+	m_backtick = AppendBackQuotes() == wyTrue ? "`" : "";
 
     CustomGrid_ApplyChanges(m_hdlggrid);
 
@@ -2607,7 +2690,7 @@ TabIndexes::OnIDOK(HWND hwnd)
         wyString tmpstr;
         tmpstr.SetAs(fieldwrap->m_newval->m_name);
         tmpstr.FindAndReplace("`", "``");
-        refcols.AddSprintf("`%s`", tmpstr.GetString());
+        refcols.AddSprintf("%s%s%s", m_backtick, tmpstr.GetString(), m_backtick);
         if(indexlenstr.GetLength())
         {
             indcols->m_lenth = indexlenstr.GetAsInt32();
@@ -2646,7 +2729,7 @@ TabIndexes::OnIDOK(HWND hwnd)
             delete cindexeswrap;
             cindexeswrap = NULL;
         }
-        CustomGrid_SetRowLongData(m_hgridindexes, row, (LONG)cindexeswrap);
+        CustomGrid_SetRowLongData(m_hgridindexes, row, (LPARAM)cindexeswrap);
         CustomGrid_SetItemLongValue(m_hgridindexes, row, col, (LPARAM) NULL);
         CustomGrid_SetText(m_hgridindexes, row, col, "");
         return;
@@ -2749,7 +2832,7 @@ TabIndexes::OnColDlgWMCommand(HWND hwnd, WPARAM wparam, LPARAM lparam)
     {
     case IDOK:
         if(m_hdlggrid)
-        OnIDOK(hwnd);
+	        OnIDOK(hwnd);
         SendMessage(hwnd, WM_CLOSE, wparam, lparam);
         break;
 
@@ -2759,12 +2842,12 @@ TabIndexes::OnColDlgWMCommand(HWND hwnd, WPARAM wparam, LPARAM lparam)
 
     case IDC_MOVEUP:
         if(m_hdlggrid)
-        OnButtonUpDown(hwnd, wyTrue);
+			OnButtonUpDown(hwnd, wyTrue);
         break;
 
     case IDC_MOVEDOWN:
         if(m_hdlggrid)
-        OnButtonUpDown(hwnd, wyFalse);
+			OnButtonUpDown(hwnd, wyFalse);
         break;
     }
 }
@@ -2958,6 +3041,9 @@ TabIndexes::HandlePrimaryKeyIndex()
     List            *listindcols = NULL;
     FieldStructWrapper *fieldwrap = NULL;
 
+	//from  .ini file
+	m_backtick = AppendBackQuotes() == wyTrue ? "`" : "";
+
     isaltertable = m_ptabmgmt->m_tabinterfaceptr->m_isaltertable;
     hgridfields  = m_ptabmgmt->m_tabfields->m_hgridfields;
     count = CustomGrid_GetRowCount(hgridfields);
@@ -3030,7 +3116,7 @@ TabIndexes::HandlePrimaryKeyIndex()
         if(tmpstr.Compare(GV_TRUE) != 0)
             continue;
 
-        newpkindexcols.AddSprintf("`%s`, ", fieldwrap->m_newval->m_name.GetString());
+        newpkindexcols.AddSprintf("%s%s%s, ", m_backtick, fieldwrap->m_newval->m_name.GetString(), m_backtick);
         indcols = new IndexColumn(fieldwrap);
         listindcols->Insert(indcols);
             
@@ -3159,6 +3245,9 @@ TabIndexes::GenerateQuery(wyString& query)
     wyString    str("");
     wyBool      retval = wyTrue;
 
+	//from  .ini file
+	m_backtick = AppendBackQuotes() == wyTrue ? "`" : "";
+
     if(m_ptabmgmt->m_tabinterfaceptr->m_isaltertable)
         retval = GenerateAlterQuery(str);
     else
@@ -3192,6 +3281,9 @@ TabIndexes::HandleIndexesOnDatatypeChange(IndexesStructWrapper* indexwrap, Field
     if(indexwrap->m_newval == indexwrap->m_oldval)
         return;
 
+	//from  .ini file
+	m_backtick = AppendBackQuotes() == wyTrue ? "`" : "";
+
     nrows = CustomGrid_GetRowCount(m_hgridindexes);
 
     //..Will go through each row and get the row of the index-wrapper
@@ -3215,7 +3307,7 @@ TabIndexes::HandleIndexesOnDatatypeChange(IndexesStructWrapper* indexwrap, Field
         tmpstr.SetAs(iindcols->m_pcwrapobj->m_newval->m_name);
         tmpstr.FindAndReplace("`", "``");
 
-        indcolsstr.AddSprintf("`%s`", tmpstr.GetString());
+        indcolsstr.AddSprintf("%s%s%s", m_backtick, tmpstr.GetString(), m_backtick);
         
         //..if wrapper is same as modified field wrapper, set length to -1; (Reset length)..
         if(iindcols->m_pcwrapobj == modifiedwrap)
@@ -3253,6 +3345,9 @@ TabIndexes::HandleIndexesOnFieldRename(IndexesStructWrapper* indexwrap, FieldStr
     if(!indexwrap)
         return;
 
+	//from  .ini file
+	m_backtick = AppendBackQuotes() == wyTrue ? "`" : "";
+
     nrows = CustomGrid_GetRowCount(m_hgridindexes);
 
     for(row=0; row<nrows; row++)
@@ -3270,7 +3365,7 @@ TabIndexes::HandleIndexesOnFieldRename(IndexesStructWrapper* indexwrap, FieldStr
         tmpstr.SetAs(iindcols->m_pcwrapobj->m_newval->m_name);
         tmpstr.FindAndReplace("`", "``");
 
-        indcolsstr.AddSprintf("`%s`", tmpstr.GetString());
+        indcolsstr.AddSprintf("%s%s%s", m_backtick, tmpstr.GetString(), m_backtick);
             
         if(iindcols->m_lenth != -1)
             indcolsstr.AddSprintf("(%d)", iindcols->m_lenth);
@@ -3304,7 +3399,10 @@ TabIndexes::HandleIndexesOnFieldDelete(IndexesStructWrapper* indexwrap, FieldStr
 
     if(!indexwrap)
         return;
-    
+
+	//from  .ini file
+	m_backtick = AppendBackQuotes() == wyTrue ? "`" : "";
+
     nrows = CustomGrid_GetRowCount(m_hgridindexes);
 
     for(row=0; row<nrows; row++)
@@ -3336,7 +3434,7 @@ TabIndexes::HandleIndexesOnFieldDelete(IndexesStructWrapper* indexwrap, FieldStr
             tmpstr.SetAs(iindcols->m_pcwrapobj->m_newval->m_name);
             tmpstr.FindAndReplace("`", "``");
 
-            indcolsstr.AddSprintf("`%s`", tmpstr.GetString());
+            indcolsstr.AddSprintf("%s%s%s", m_backtick, tmpstr.GetString(), m_backtick);
             
             if(iindcols->m_lenth != -1)
                 indcolsstr.AddSprintf("(%d)", iindcols->m_lenth);
