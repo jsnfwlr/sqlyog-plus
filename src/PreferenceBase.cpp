@@ -1528,25 +1528,18 @@ PreferenceBase::InitOthersPrefValues()
     // Iconsize combo box
 	wyIni::IniGetString(GENERALPREFA, "ToolIconSize", TOOLBARICONSIZE_DEFAULT, &tempstr, dirstr.GetString());
 	ret = SendMessage(GetDlgItem(m_hwnd, IDC_ICONSIZE), CB_SELECTSTRING, -1, (LPARAM)tempstr.GetAsWideChar());
-	if(ret == CB_ERR)
+	if(ret == CB_ERR) {
 		SendMessage(GetDlgItem(m_hwnd, IDC_ICONSIZE), CB_SETCURSEL, 1,(LPARAM)0);
+    }
 
 	GetOthersPrefSizeValues(m_hwnd);
 
-	if(pGlobals->m_pcmainwin->m_connection->m_enttype != ENT_NORMAL && pGlobals->m_pcmainwin->m_connection->m_enttype != ENT_ULTIMATE && pGlobals->m_pcmainwin->m_connection->m_enttype != ENT_TRIAL)
-	{
-		SetWindowText(GetDlgItem(m_hwnd, IDC_TRANSACTION), _(L"Transaction options (Ultimate only)"));
-		EnableWindow(GetDlgItem(m_hwnd, IDC_PROMPTTRANSACTION), FALSE);
-		EnableWindow(GetDlgItem(m_hwnd, IDC_PROMPTCLOSETRANSACTION), FALSE);
-		return;
-	}
-	else
-	{
-		truncdata	= wyIni::IniGetInt(GENERALPREFA, "PromptinTransaction", PROMPTTRANSACTION_DEFAULT, dirstr.GetString());
-		SendMessage(GetDlgItem(m_hwnd, IDC_PROMPTTRANSACTION), BM_SETCHECK, truncdata, 0);
-		truncdata	= wyIni::IniGetInt(GENERALPREFA, "PromptinTransactionClose", PROMPTTRANSACTIONCLOSE_DEFAULT, dirstr.GetString());
-		SendMessage(GetDlgItem(m_hwnd, IDC_PROMPTCLOSETRANSACTION), BM_SETCHECK, truncdata, 0);
-	}
+
+    truncdata	= wyIni::IniGetInt(GENERALPREFA, "PromptinTransaction", PROMPTTRANSACTION_DEFAULT, dirstr.GetString());
+    SendMessage(GetDlgItem(m_hwnd, IDC_PROMPTTRANSACTION), BM_SETCHECK, truncdata, 0);
+    truncdata	= wyIni::IniGetInt(GENERALPREFA, "PromptinTransactionClose", PROMPTTRANSACTIONCLOSE_DEFAULT, dirstr.GetString());
+    SendMessage(GetDlgItem(m_hwnd, IDC_PROMPTCLOSETRANSACTION), BM_SETCHECK, truncdata, 0);
+	
 
     return;
 }
