@@ -332,6 +332,7 @@ typedef struct __struct_tunnelauth
 	bool		isproxy;
 	bool		ischallenge;
 	bool		isbase64encode;
+	bool		isencrypted;
 
 	wchar_t		proxy[128];
 	wchar_t		proxyusername[128];
@@ -447,6 +448,9 @@ struct ConnectionInfo
 
 	//persist info tab
 	wyBool		m_isInfoOpen;
+
+	wyUInt32	m_isencrypted;
+	
 };
 
 
@@ -609,6 +613,7 @@ typedef struct tagsqlite
    
     
 */ 
+
 typedef struct tagGlobals
 {
 	wyInt32		m_colcount;
@@ -717,6 +722,9 @@ typedef struct tagGlobals
 	wyBool		m_sessionrestore;
 	wyString	m_database;
 	wyString	m_sessionbackup;
+	List		*m_connectiontabnamelist;
+	List		*m_mdilistfordropdown;
+
 } GLOBALS, *PGLOBALS;
 
 

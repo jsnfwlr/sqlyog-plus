@@ -101,6 +101,49 @@ public:
 	List		*m_listtabeditor_temp;		
 };
 
+enum TabType
+{
+	querytab,
+	querybuilder,
+	schemadesigner,
+	datasearch,
+	none
+};
+class ListOfOpenQueryTabs : public wyElem
+{
+public:
+	wyString tabname;
+	wyInt32 seqofquerytab;
+	wyInt32 seqofquerybuilder;
+	wyInt32 seqofschemadesigner;
+	wyInt32 seqofdatasearch;
+	TabType tabtype;
+	ListOfOpenQueryTabs()
+	{
+		tabname.SetAs("");
+		seqofquerytab = 1;
+		seqofquerybuilder = 1;
+		seqofschemadesigner = 1;
+		seqofdatasearch = 1;
+		tabtype = none;
+	}
+};
+class MDIListForDropDrown : public wyElem
+{
+public:
+	wyString name;
+	MDIWindow	*mdi;
+	List *opentab;
+	//HWND m_hwndconntabinlist;
+	//TabModule * m_hwndTabModuleinlist;
+	MDIListForDropDrown()
+	{
+		name.SetAs("");
+		opentab = new List(); 
+	}
+};
+
+
 class tabdetailelem : public wyElem
 {
 public:
@@ -134,6 +177,19 @@ public:
 	wyBool		m_isfile;
 	wyBool		m_isfocussed;
 	wyString	m_content;
+};
+
+class ListofOpenTabs : public wyElem
+{
+	public:
+		wyString name;
+		//HWND m_hwndconntabinlist;
+		TabModule * m_hwndTabModuleinlist;
+		ListofOpenTabs()
+		{
+			name.SetAs("");
+			
+		}
 };
 
 class FrameWindow
@@ -653,6 +709,10 @@ public:
 
     void                    LoadConnTabPlusMenu(LPARAM lparam);
 
+	//Display connection and query tab drop down menu
+
+	void                    LoadConnTabDropDownMenu(LPARAM lparam);
+
     static void CALLBACK    TooltipTimerProc(HWND hwnd, UINT message, UINT_PTR id, DWORD time);
     
     static void             ShowQueryExecToolTip(wyBool show = wyTrue);
@@ -772,6 +832,8 @@ public:
     wyBool                  m_isredindexhelp;
 
 	wyInt32					m_focussedcon;
+
+	wyBool					m_isresizing;
 
 
 #ifdef COMMUNITY	
@@ -1673,11 +1735,18 @@ public:
     */
     void                OnImportConnectionDetails();
 
+	/// Function to update dropdown structure
+	/**
+
+	*/
+	void                UpdateDropDownStruct(wyString tabname);
+
 
 	wyBool				SaveConnectionDetails(wySQLite	*ssnsqliteobj = NULL);
 	wyBool				SaveConnectionDetails2(wySQLite	*ssnsqliteobj = NULL);
 	wyBool				SaveSessionFile(HWND hwnd, wyBool issaveas);
 	wyBool				OpenSessionFile();
+	void				MigratePasswordofSessionFile(wyString filename);
 	wyString			m_sessionfile;
 	wyString			m_sessionname;
 	wyString			m_previoussessionfile;
@@ -1687,6 +1756,7 @@ public:
 	wyBool				WriteTabDetailsToTempList(tabeditorelem *temptabeditorele, CTCITEM quetabitem, wyInt32 tabid, wyInt32 position, wyInt32 id,TabTypes *tabqueryactive, MDIWindow *wnd);
 	wyBool				SetStatusParts2(HWND hwndstatus);
 	wyInt32				OnStatusBarWmCtlColorStatic(HWND hwnd, WPARAM wparam, LPARAM lparam);
+	void				CreateIniFileBackup();
 	HFONT			    m_trialtextfont;
 	HFONT			    m_trialbuyfont;
 	//HBRUSH				m_trialbuybrush;
