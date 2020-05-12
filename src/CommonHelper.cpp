@@ -20,10 +20,15 @@
 #include <shlobj.h>
 #include <mlang.h>
 #include <Tlhelp32.h>
+#include <iomanip>
+//#include "wyIni.h"
 #else
  #include <unistd.h>
 #endif
-
+#include <iomanip>
+#include "modes.h"
+#include "aes.h"
+#include "filters.h"
 #include <string>
 #include <stddef.h>
 #include <assert.h>
@@ -69,6 +74,9 @@ extern	FILE	*logfilehandle;
 
 static wyChar table64[]=
   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+static CryptoPP::byte AESKey[16] = { };//provide any Key
+static CryptoPP::byte AESiv[16] = {}; //Provide any IV
 
 Tunnel * 
 CreateTunnel(wyBool istunnel)
@@ -1131,6 +1139,119 @@ if(ptr) {
 return found;
 
 }
+wyBool GetCheckConstraintValue(wyChar * currentrow, wyString * expression)
+{
+	if (currentrow == NULL)
+	{
+		return wyFalse;
+	}
+	wyChar * find = "CHECK", *findcomment = "COMMENT";
+	wyBool found = wyFalse;
+	wyChar *ptr = strstr(currentrow, find);
+	wyChar *ptrc = strstr(currentrow, findcomment);
+	wyString s1, s2,s3;
+	s1.SetAs(currentrow);
+	s2.SetAs("");
+	s3.SetAs("COMMENT");
+	wyInt32 index=0;
+	if (ptr) {
+		if (ptrc) {
+			index = ptr - currentrow + 5;
+			s2.SetAs(s1.Substr(index, 7));
+			while (s2.CompareI(s3)!=0)//(currentrow[index + 2] != 'C' && currentrow[index + 3] != 'O' && currentrow[index + 4] != 'M')
+			{
+				expression->AddSprintf("%c", currentrow[index]);
+				index++;
+				s2.SetAs(s1.Substr(index, 7));
+			}
+			found = wyTrue;
+		}
+		else
+		{
+			 index = ptr - currentrow + 5;
+
+			while (wyTrue)
+			{
+				if ((currentrow[index] == ',' && currentrow[index + 2] == ' ')|| (currentrow[index] == '\0' ))
+					break;
+
+				expression->AddSprintf("%c", currentrow[index]);
+				index++;
+			}
+			found = wyTrue;
+		}
+
+	}
+
+	return found;
+
+}
+
+wyBool GettablelevelCheckConstraintValue(wyChar * currentrow, wyString * expression)
+{
+	wyChar * find = "CHECK";
+	wyBool found = wyFalse;/*, withcomment = wyFalse, withoutcomment = wyFalse;*/
+	wyChar *ptr = strstr(currentrow, find);
+	wyInt32 index=0;
+	if (ptr) {
+		found = wyTrue;
+		index =( ptr - currentrow) + 5;
+		while (currentrow[index] != '\0')
+		{
+			/*if (currentrow[index] == '\0' && currentrow[index + 2] == ' ')
+				break;*/
+			expression->AddSprintf("%c", currentrow[index]);
+			index++;
+		}
+		const char last = expression->GetCharAt(expression->GetLength() - 1);
+		if (last == ',')
+		{
+			expression->Strip(1);
+		}
+	}
+
+	return found;
+}
+
+void
+CheckForQuotesAndReplace(wyString *name)
+{
+	wyBool flag = wyFalse;
+	const char first = name->GetCharAt(0);
+	const char last = name->GetCharAt(name->GetLength() - 1);
+
+	if (first == '`' && last == '`')
+	{
+		name->Strip(1);
+		name->Erase(0, 1);
+	}
+	return ;
+}
+
+wyBool GetCheckConstraintName(wyChar * currentrow, wyString * checkconstraintname)
+{
+	wyChar * find = "CONSTRAINT";
+	wyBool found = wyFalse;
+	wyString s1, s2(""), p;
+	wyInt32 index = 0;
+
+	s1.SetAs(currentrow);
+
+	wyChar *ptr = strstr(currentrow, find);
+	if (ptr) {
+			found = wyTrue;
+			index = ptr - currentrow + 12;
+				while (currentrow[index] != '`')
+				{
+					checkconstraintname->AddSprintf("%c", currentrow[index]);
+					index++;
+				}
+
+		}
+
+	return found;
+
+}
 wyInt32
 GetBitFieldColumnWidth(wyString &strcreate, wyInt32 fieldpos)
 {
@@ -1334,6 +1455,32 @@ GetModuleNameLength()
 
     return len;
 }
+
+wyBool
+GetModuleDir(wyString &path)
+{
+	wyWChar fullpath[MAX_PATH + 1] = { 0 };
+	wyWChar extractpath[MAX_PATH + 1] = { 0 }, *filename;
+	wyInt32 len;
+
+	if (GetModuleFileName(NULL, fullpath, MAX_PATH - 1) == NULL)
+	{
+		return wyFalse;
+	}
+
+	// extract the directory
+	if (GetFullPathName(fullpath, MAX_PATH, extractpath, &filename) == NULL)
+	{
+		return wyFalse;
+	}
+
+	*(filename - 1) = 0;		// eat the trailing slash
+
+	path.SetAs(extractpath);
+
+	return wyTrue;
+}
+
 
  #endif
 
@@ -3782,11 +3929,23 @@ SetMySQLOptions(ConnectionInfo *conn, Tunnel *tunnel, PMYSQL pmysql, wyBool isse
 	/*if(conn->m_ispwdcleartext == wyTrue)*/
 #ifdef _WIN32
 	TCHAR curdir[MAX_PATH];
-	wyString wyDir;
-
-	GetCurrentDirectory(MAX_PATH-1, curdir);
-	wyDir.SetAs(curdir);
-	wyDir.Add("\\");
+	wyString wyDir, curdirnew;
+	if (GetModuleDir(curdirnew))
+	{
+		wyDir.SetAs(curdirnew);
+		wyDir.Add("\\");
+		//MessageBox(NULL, curdirnew.GetAsWideChar(), L"directory from new method", NULL);
+	}
+	else
+	{
+		GetCurrentDirectory(MAX_PATH - 1, curdir);
+		wyDir.SetAs(curdir);
+		wyDir.Add("\\");
+		//MessageBox(NULL, wyDir.GetAsWideChar(), L"directory old location", NULL);
+	}
+	//GetCurrentDirectory(MAX_PATH-1, curdir);
+	//wyDir.SetAs(curdir);
+	//wyDir.Add("\\");
 	mysql_options(*pmysql,MYSQL_PLUGIN_DIR ,wyDir.GetString());
 #else
 
@@ -3924,7 +4083,7 @@ GetLocalEmptyPort(ConnectionInfo *con)
 	if(psocket == INVALID_SOCKET)
 		return -1;
 
-	ret = bind(psocket, (sockaddr*)&name, sizeof(name));
+	ret = ::bind(psocket, (sockaddr*)&name, sizeof(name));
 
 	if(ret)
 	{
@@ -4093,6 +4252,7 @@ InitConnectionDetails(ConnectionInfo *conn)
 	conn->m_isdeftimeout		= wyTrue;
 	conn->m_strwaittimeout.SetAs("28800"); 
 	conn->m_isreadonly			= wyFalse;
+	conn->m_isencrypted = 0;
 	//conn->m_ispwdcleartext		= wyFalse;
 
 #ifdef _WIN32	
@@ -4220,7 +4380,7 @@ IsDatatypeNumeric(wyString  &datatype)
 
 
 wyBool
-DecodePassword(wyString &text)
+DecodePassword_Absolute(wyString &text)
 {
 	wyChar      pwd[512]={0}, pwdutf8[512] = {0};
 
@@ -4261,7 +4421,7 @@ RotateBitLeft(wyUChar *str)
 }
 
 wyBool
-EncodePassword(wyString &text)
+EncodePassword_Absolute(wyString &text)
 {
 	wyChar *encode = NULL, pwdutf8[512] = {0};
 
@@ -4332,6 +4492,82 @@ RemoveDefiner(wyString &text, const wyChar* pattern, wyInt32 extra)
 
 
 }
+
+void
+RemoveBrackets(wyString &text, const wyChar* pattern)
+{
+	
+	wyInt32   ovector[30];
+	pcre           *re;
+	wyInt32         erroffset, rc = -1, sucess = 0;//, i = 0;
+	wyInt32         subject_length, text_length;
+	const char      *error;
+	wyString tempstr, strfirst,strlast;
+	wyChar * tempstr1 = NULL;
+	
+
+
+	subject_length = (wyInt32)strlen(text.GetString());
+
+	re = pcre_compile(
+		pattern,              /* the pattern */
+		PCRE_UTF8 | PCRE_CASELESS | PCRE_NEWLINE_CR,/* default options */ //match is a case insensitive 
+		&error,               /* for error message */
+		&erroffset,           /* for error offset */
+		NULL);                /* use default character tables */
+
+							  /* Compilation failed: print the error message and exit */
+
+	if (re == NULL)
+		return;
+
+	/*************************************************************************
+	* If the compilation succeeded, we call PCRE again, in order to do a     *
+	* pattern match against the subject string. This does just ONE match *
+	*************************************************************************/
+
+	rc = pcre_exec(
+		re,                   /* the compiled pattern */
+		NULL,                 /* no extra data - we didn't study the pattern */
+		text.GetString(),              /* the subject string */
+		subject_length,       /* the length of the subject */
+		0,                    /* start at offset 0 in the subject */
+		PCRE_NO_UTF8_CHECK,             /* default options */
+		ovector,              /* output vector for substring information */
+		30);           /* number of elements in the output vector */
+
+	if (re)
+		pcre_free(re);
+
+	tempstr.SetAs(text.GetString());
+	strlast.SetAs(text.GetString());
+
+	if (rc == 2)
+	{
+		tempstr1=tempstr.Substr(ovector[0], ovector[1]);
+		if (tempstr1 != NULL)
+		{
+			text.SetAs(tempstr1);
+		}
+		strlast.Erase(ovector[0], ovector[1] - ovector[0]);
+	}
+		//Add method to remove the opening and closing brackets
+		text_length = (wyInt32)strlen(strlast.GetString());
+		
+		const char first = strlast.GetCharAt(0);
+		const char last = strlast.GetCharAt(text_length - 1);
+	
+
+		if (strcmp(&first,"(")==0  && strcmp(&last, ")")==0)
+		{
+			strlast.Erase(0, 1);
+			strlast.Strip(1);
+		}
+		strfirst.AddSprintf("%s%s", text.GetString(), strlast.GetString());
+		text.SetAs(strfirst);
+
+}
+
 //void DebugLog(const char *buffer)
 //{
 //        wyWChar                directory[MAX_PATH+1];
@@ -4354,3 +4590,83 @@ RemoveDefiner(wyString &text, const wyChar* pattern, wyInt32 extra)
 //        fprintf(fp, "%s\r\n", buffer);
 //        fclose(fp);
 //}
+
+wyBool
+EncodePassword(wyString &text)
+{
+	wyString ciphertext, plaintext("");
+	wyString temptext("");
+
+	plaintext.SetAs(text);
+	// create an encrypted object
+	CryptoPP::CTR_Mode<CryptoPP::AES>::Encryption enc;
+	enc.SetKeyWithIV(AESKey, sizeof(AESKey), AESiv);
+
+	std::string encText;
+	CryptoPP::StreamTransformationFilter encFilter(enc, new CryptoPP::StringSink(encText));
+
+	//encryption
+	encFilter.Put(reinterpret_cast<const CryptoPP::byte*>(plaintext.GetString()), plaintext.GetLength());
+	encFilter.MessageEnd();
+	text.SetAsDirect(encText.data(), encText.length());
+	
+	return wyTrue;
+}
+
+wyBool
+DecodePassword(wyString &text)
+{
+	wyString ciphertext(""), decryptedtext("");
+
+	if (text.GetLength() <= 0)
+	{
+		return wyFalse;
+	}
+
+	ciphertext.SetAsDirect(text.GetString(), text.GetLength());
+
+	CryptoPP::CTR_Mode<CryptoPP::AES>::Decryption dec;
+	dec.SetKeyWithIV(AESKey, sizeof(AESKey), AESiv);
+
+	// Conversion filter for decryption
+	std::string decText;
+	CryptoPP::StreamTransformationFilter decFilter(dec, new CryptoPP::StringSink(decText));
+	decFilter.Put(reinterpret_cast<const CryptoPP::byte*>(ciphertext.GetString()), ciphertext.GetLength());
+	decFilter.MessageEnd();
+
+	text.SetAs(decText.c_str());
+
+	return wyTrue;
+}
+
+wyBool
+MigratePassword(wyString conn, wyString dirstr, wyString &pwdstr)
+{
+
+	DecodePassword_Absolute(pwdstr);
+	EncodePassword(pwdstr);
+	wyChar *encodestr=pwdstr.EncodeBase64Password();
+	pwdstr.Clear();
+	pwdstr.SetAs(encodestr);
+
+	if (encodestr)
+		free(encodestr);
+	return wyTrue;
+	
+}
+
+wyBool
+MigratePassword(wyString &pwdstr)
+{
+
+	DecodePassword_Absolute(pwdstr);
+	EncodePassword(pwdstr);
+	wyChar *encodestr=pwdstr.EncodeBase64Password();
+	pwdstr.Clear();
+	pwdstr.SetAs(encodestr);
+
+	if (encodestr)
+		free(encodestr);
+	return wyTrue;
+
+}

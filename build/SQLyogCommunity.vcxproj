@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -29,7 +29,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{040BE517-FD94-46E0-89F6-07F29CA8750E}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -45,18 +45,18 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Template|x64'">
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -94,10 +94,26 @@
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Template|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
     <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GenerateManifest>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ExecutablePath>$(ExecutablePath)</ExecutablePath>
+    <IncludePath>$(ProjectDir)..\src\cryptopp700;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ExecutablePath>$(ExecutablePath)</ExecutablePath>
+    <IncludePath>$(ProjectDir)..\src\cryptopp700;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ExecutablePath>$(ExecutablePath)</ExecutablePath>
+    <IncludePath>$(ProjectDir)..\src\cryptopp700;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ExecutablePath>$(ExecutablePath)</ExecutablePath>
+    <IncludePath>$(ProjectDir)..\src\cryptopp700;$(IncludePath)</IncludePath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../include;../include/scintilla;../include/mysql;../include/htmlayout;../include/pcre;../include/tinyxml;../include/vld;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include;../include/scintilla;../include/mysql;../include/htmlayout;../include/pcre;../include/tinyxml;../include/vld;../include/cryptlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_WIN32_WINNT=0x600;COMMUNITY;UNICODE;_UNICODE;PCRE_STATIC;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_NON_CONFORMING_SWPRINTFS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -109,7 +125,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>shfolder.lib;version.lib;Ws2_32.lib;odbc32.lib;odbccp32.lib;wsock32.lib;comctl32.lib;htmlhelp.lib;wininet.lib;imm32.lib;gdiplus.lib;ole32.lib;msimg32.lib;sqlite3.lib;mariadbclient.lib;HTMLayout.lib;pcre.lib;Rpcrt4.lib;shlwapi.lib;vld.lib;winmm.lib;ssleay32MD.lib;libeay32MD.lib;wevtapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>shfolder.lib;version.lib;Ws2_32.lib;odbc32.lib;odbccp32.lib;wsock32.lib;comctl32.lib;htmlhelp.lib;wininet.lib;imm32.lib;gdiplus.lib;ole32.lib;msimg32.lib;sqlite3.lib;mariadbclient.lib;HTMLayout.lib;pcre.lib;Rpcrt4.lib;shlwapi.lib;vld.lib;winmm.lib;ssleay32MD.lib;libeay32MD.lib;wevtapi.lib;cryptlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <IgnoreSpecificDefaultLibraries>LIBCMT;msvcrt;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
@@ -123,11 +139,14 @@
     <Manifest>
       <EnableDPIAwareness>false</EnableDPIAwareness>
     </Manifest>
+    <PreBuildEvent>
+      <Command>$(BuildSystem) ..\src\cryptopp700\cryptlib.vcxproj /p:configuration=Debug /p:platform=win32</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../include;../include/scintilla;../include/mysql;../include/htmlayout;../include/pcre;../include/tinyxml;../include/vld;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include;../include/scintilla;../include/mysql;../include/htmlayout;../include/pcre;../include/tinyxml;../include/vld;../include/cryptlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;WIN64;_DEBUG;_WINDOWS;_WIN32_WINNT=0x501;COMMUNITY;UNICODE;_UNICODE;PCRE_STATIC;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_NON_CONFORMING_SWPRINTFS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -138,7 +157,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>shfolder.lib;version.lib;Ws2_32.lib;odbc32.lib;odbccp32.lib;wsock32.lib;comctl32.lib;htmlhelp.lib;wininet.lib;imm32.lib;gdiplus.lib;ole32.lib;msimg32.lib;sqlite3.lib;mariadbclient.lib;HTMLayout.lib;pcre.lib;Rpcrt4.lib;shlwapi.lib;vld.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>shfolder.lib;version.lib;Ws2_32.lib;odbc32.lib;odbccp32.lib;wsock32.lib;comctl32.lib;htmlhelp.lib;wininet.lib;imm32.lib;gdiplus.lib;ole32.lib;msimg32.lib;sqlite3.lib;mariadbclient.lib;HTMLayout.lib;pcre.lib;Rpcrt4.lib;shlwapi.lib;vld.lib;winmm.lib;cryptlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <IgnoreSpecificDefaultLibraries>LIBCMT; LIBC;LIBCD;msvcrt;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
@@ -154,12 +173,15 @@
     <ResourceCompile>
       <PreprocessorDefinitions>WIN64</PreprocessorDefinitions>
     </ResourceCompile>
+    <PreBuildEvent>
+      <Command>$(BuildSystem) ..\src\cryptopp700\cryptlib.vcxproj /p:configuration=Debug /p:platform=x64</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>../include;../include/scintilla;../include/mysql;../include/htmlayout;../include/pcre;../include/tinyxml;../include/vld;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include;../include/scintilla;../include/mysql;../include/htmlayout;../include/pcre;../include/tinyxml;../include/vld;../include/cryptlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_WIN32_WINNT=0x600;SCI_LEXER;STATIC_BUILD;COMMUNITY;_UNICODE;UNICODE;PCRE_STATIC;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_NON_CONFORMING_SWPRINTFS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -172,7 +194,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>shfolder.lib;version.lib;Ws2_32.lib;odbc32.lib;odbccp32.lib;wsock32.lib;comctl32.lib;htmlhelp.lib;wininet.lib;imm32.lib;gdiplus.lib;ole32.lib;msimg32.lib;sqlite3.lib;mariadbclient.lib;HTMLayout.lib;pcre.lib;Rpcrt4.lib;shlwapi.lib;vld.lib;winmm.lib;wevtapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>shfolder.lib;version.lib;Ws2_32.lib;odbc32.lib;odbccp32.lib;wsock32.lib;comctl32.lib;htmlhelp.lib;wininet.lib;imm32.lib;gdiplus.lib;ole32.lib;msimg32.lib;sqlite3.lib;mariadbclient.lib;HTMLayout.lib;pcre.lib;Rpcrt4.lib;shlwapi.lib;vld.lib;winmm.lib;wevtapi.lib;cryptlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <IgnoreSpecificDefaultLibraries>LIBCD;msvcrt;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
@@ -188,12 +210,15 @@
     <Manifest>
       <EnableDPIAwareness>false</EnableDPIAwareness>
     </Manifest>
+    <PreBuildEvent>
+      <Command>$(BuildSystem) ..\src\cryptopp700\cryptlib.vcxproj /p:configuration=Release /p:platform=win32</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>../include;../include/scintilla;../include/mysql;../include/htmlayout;../include/pcre;../include/tinyxml;../include/vld;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../include;../include/scintilla;../include/mysql;../include/htmlayout;../include/pcre;../include/tinyxml;../include/vld;../include/cryptlib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;WIN64;NDEBUG;_WINDOWS;_WIN32_WINNT=0x501;SCI_LEXER;STATIC_BUILD;COMMUNITY;_UNICODE;UNICODE;PCRE_STATIC;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_NON_CONFORMING_SWPRINTFS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -206,7 +231,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>shfolder.lib;version.lib;Ws2_32.lib;odbc32.lib;odbccp32.lib;wsock32.lib;comctl32.lib;htmlhelp.lib;wininet.lib;imm32.lib;gdiplus.lib;ole32.lib;msimg32.lib;sqlite3.lib;mariadbclient.lib;HTMLayout.lib;pcre.lib;Rpcrt4.lib;shlwapi.lib;vld.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>shfolder.lib;version.lib;Ws2_32.lib;odbc32.lib;odbccp32.lib;wsock32.lib;comctl32.lib;htmlhelp.lib;wininet.lib;imm32.lib;gdiplus.lib;ole32.lib;msimg32.lib;sqlite3.lib;mariadbclient.lib;HTMLayout.lib;pcre.lib;Rpcrt4.lib;shlwapi.lib;vld.lib;winmm.lib;cryptlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <IgnoreSpecificDefaultLibraries>LIBCD.lib;msvcrt.lib;%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
@@ -224,6 +249,9 @@
     <ResourceCompile>
       <PreprocessorDefinitions>WIN64</PreprocessorDefinitions>
     </ResourceCompile>
+    <PreBuildEvent>
+      <Command>$(BuildSystem) ..\src\cryptopp700\cryptlib.vcxproj /p:configuration=Release /p:platform=x64</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">
     <ClCompile>
@@ -269,6 +297,8 @@
     <ClCompile Include="..\src\ConnectionCommunity.cpp" />
     <ClCompile Include="..\src\ConnectionTab.cpp" />
     <ClCompile Include="..\src\CopyDatabase.cpp" />
+    <ClCompile Include="..\src\cryptopp700\filters.cpp" />
+    <ClCompile Include="..\src\cryptopp700\modes.cpp" />
     <ClCompile Include="..\src\CustGrid.cpp" />
     <ClCompile Include="..\src\CustomSaveDlg.cpp" />
     <ClCompile Include="..\src\CustTab.cpp" />
@@ -336,6 +366,7 @@
     <ClCompile Include="..\src\SQLTokenizer.cpp" />
     <ClCompile Include="..\src\StatusbarMgmt.cpp" />
     <ClCompile Include="..\src\TabAdvancedProperties.cpp" />
+    <ClCompile Include="..\src\TabCheck.cpp" />
     <ClCompile Include="..\src\TabEditor.cpp">
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename)1.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)1.obj</ObjectFileName>
@@ -382,10 +413,7 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)1.obj</ObjectFileName>
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)1.obj</ObjectFileName>
     </ClCompile>
-    <ClCompile Include="..\src\tinyxml\tinystr.cpp" />
-    <ClCompile Include="..\src\tinyxml\tinyxml.cpp" />
-    <ClCompile Include="..\src\tinyxml\tinyxmlerror.cpp" />
-    <ClCompile Include="..\src\tinyxml\tinyxmlparser.cpp" />
+    <ClCompile Include="..\src\tinyxml\tinyxml2.cpp" />
     <ClCompile Include="..\src\TunnelCommunity.cpp" />
     <ClCompile Include="..\src\UpgradeCheck.cpp" />
     <ClCompile Include="..\src\UrlEncode.cpp" />
@@ -482,6 +510,7 @@
     <ClInclude Include="..\include\StatusbarMgmt.h" />
     <ClInclude Include="..\include\Symbols.h" />
     <ClInclude Include="..\include\TabAdvancedProperties.h" />
+    <ClInclude Include="..\include\TabCheck.h" />
     <ClInclude Include="..\include\TabEditor.h" />
     <ClInclude Include="..\include\TabEditorSplitter.h" />
     <ClInclude Include="..\include\TabFields.h" />
@@ -501,8 +530,7 @@
     <ClInclude Include="..\include\TabResult.h" />
     <ClInclude Include="..\include\TabTableData.h" />
     <ClInclude Include="..\include\TabTypes.h" />
-    <ClInclude Include="..\include\tinyxml\tinystr.h" />
-    <ClInclude Include="..\include\tinyxml\tinyxml.h" />
+    <ClInclude Include="..\include\tinyxml\tinyxml2.h" />
     <ClInclude Include="..\include\Tunnel.h" />
     <ClInclude Include="..\include\TunnelCommunity.h" />
     <ClInclude Include="..\include\UpgradeCheck.h" />
